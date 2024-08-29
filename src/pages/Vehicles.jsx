@@ -46,45 +46,45 @@ const Vehicles = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Vehicles</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Vehicles</h1>
         <Link to="/vehicles/manage" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
           Manage Vehicles
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-gray-800 shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-gray-700">
+        <table className="min-w-full bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+          <thead className="bg-gray-200 dark:bg-gray-700">
             <tr>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Make</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Model</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Year</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">License Plate</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">VIN</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">Make</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">Model</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">Year</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">License Plate</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">VIN</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-800 dark:text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-600">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
             {vehicles.map((vehicle) => (
               <React.Fragment key={vehicle.id}>
                 <tr 
-                  className="hover:bg-gray-700 cursor-pointer"
+                  className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   onClick={() => toggleExpandVehicle(vehicle.id)}
                 >
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.make}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.model}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.year}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.license_plate}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.vin}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.status}</td>
-                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.make}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.model}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.year}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.license_plate}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.vin}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">{vehicle.status}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-800 dark:text-gray-300">
                     {expandedVehicle === vehicle.id ? <FaChevronUp /> : <FaChevronDown />}
                   </td>
                 </tr>
                 {expandedVehicle === vehicle.id && (
                   <tr>
-                    <td colSpan="7" className="p-4 bg-gray-900">
-                      <div className="grid grid-cols-2 gap-4">
+                    <td colSpan="7" className="p-4 bg-gray-50 dark:bg-gray-900">
+                      <div className="grid grid-cols-2 gap-4 text-gray-800 dark:text-gray-300">
                         <p><strong>Vehicle Type:</strong> {vehicle.vehicle_type}</p>
                         <p><strong>Current Mileage:</strong> {vehicle.current_mileage}</p>
                         <p><strong>Color:</strong> {vehicle.color}</p>
