@@ -19,6 +19,7 @@ const ManageParts = () => {
   });
   const [editingPart, setEditingPart] = useState(null);
   const [vehicles, setVehicles] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     fetchParts();
@@ -95,81 +96,35 @@ const ManageParts = () => {
 
   const renderPartForm = (part, setPart, submitHandler, buttonText) => (
     <div className="grid grid-cols-2 gap-4">
-      <input
-        type="text"
-        name="part_number_oem"
-        placeholder="OEM Part Number"
-        value={part.part_number_oem}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="text"
-        name="part_number_vendor"
-        placeholder="Vendor Part Number"
-        value={part.part_number_vendor}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="text"
-        name="description"
-        placeholder="Description"
-        value={part.description}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="text"
-        name="category"
-        placeholder="Category"
-        value={part.category}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="number"
-        name="cost"
-        placeholder="Cost"
-        value={part.cost}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="number"
-        name="stock_level"
-        placeholder="Stock Level"
-        value={part.stock_level}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="number"
-        name="reorder_threshold"
-        placeholder="Reorder Threshold"
-        value={part.reorder_threshold}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="text"
-        name="supplier_id"
-        placeholder="Supplier ID"
-        value={part.supplier_id}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
-      <input
-        type="text"
-        name="location_id"
-        placeholder="Location ID"
-        value={part.location_id}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-      />
+      {[
+        { name: "part_number_oem", label: "OEM Part Number", type: "text" },
+        { name: "part_number_vendor", label: "Vendor Part Number", type: "text" },
+        { name: "description", label: "Description", type: "text" },
+        { name: "category", label: "Category", type: "text" },
+        { name: "cost", label: "Cost", type: "number" },
+        { name: "stock_level", label: "Stock Level", type: "number" },
+        { name: "reorder_threshold", label: "Reorder Threshold", type: "number" },
+        { name: "supplier_id", label: "Supplier ID", type: "text" },
+        { name: "location_id", label: "Location ID", type: "text" },
+      ].map((field) => (
+        <div key={field.name} className="flex flex-col">
+          <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {field.label}
+          </label>
+          <input
+            type={field.type}
+            id={field.name}
+            name={field.name}
+            value={part[field.name]}
+            onChange={(e) => handleInputChange(e, part, setPart)}
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+        </div>
+      ))}
       <div className="flex items-center">
         <input
           type="checkbox"
+          id="consumable"
           name="consumable"
           checked={part.consumable}
           onChange={(e) => handleInputChange(e, part, setPart)}
@@ -177,42 +132,61 @@ const ManageParts = () => {
         />
         <label htmlFor="consumable" className="text-gray-800 dark:text-white">Consumable</label>
       </div>
-      <select
-        name="vehicle_id"
-        value={part.vehicle_id}
-        onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-      >
-        <option value="">Select Vehicle (Optional)</option>
-        {vehicles.map(vehicle => (
-          <option key={vehicle.id} value={vehicle.id}>
-            {vehicle.make} {vehicle.model} ({vehicle.license_plate})
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col">
+        <label htmlFor="vehicle_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Associated Vehicle
+        </label>
+        <select
+          id="vehicle_id"
+          name="vehicle_id"
+          value={part.vehicle_id}
+          onChange={(e) => handleInputChange(e, part, setPart)}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="">Select Vehicle (Optional)</option>
+          {vehicles.map(vehicle => (
+            <option key={vehicle.id} value={vehicle.id}>
+              {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
+
+  const toggleAddForm = () => {
+    setShowAddForm(!showAddForm);
+  };
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Manage Parts</h1>
-        <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-          Back to Parts
-        </Link>
+        <div>
+          <button
+            onClick={toggleAddForm}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
+          >
+            {showAddForm ? 'Hide Add Form' : 'Add Part'}
+          </button>
+          <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+            Back to Parts
+          </Link>
+        </div>
       </div>
 
-      {/* Form to add new part */}
-      <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Part</h2>
-        {renderPartForm(newPart, setNewPart, handleAddPart, "Add Part")}
-        <button
-          onClick={handleAddPart}
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Add Part
-        </button>
-      </div>
+      {showAddForm && (
+        <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Part</h2>
+          {renderPartForm(newPart, setNewPart, handleAddPart, "Add Part")}
+          <button
+            onClick={handleAddPart}
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Add Part
+          </button>
+        </div>
+      )}
 
       {/* List of existing parts */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">

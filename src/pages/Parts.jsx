@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getAllParts, getPartsByCategory, getPartsLowOnStock } from '../firebaseOperations';
+import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles } from '../firebaseOperations';
 
 const Parts = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,9 +12,20 @@ const Parts = () => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [vehiclesMap, setVehiclesMap] = useState({});
+
+  const formatCost = (value) => {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+  };
+
+  const getAssociatedVehicle = (vehicleId) => {
+    const vehicle = vehiclesMap[vehicleId];
+    return vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.license_plate})` : 'Unknown';
+  };
 
   useEffect(() => {
     fetchParts();
+    fetchVehicles();
   }, [category]);
 
   const fetchParts = async () => {
@@ -37,6 +48,19 @@ const Parts = () => {
       console.error("Error fetching parts:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVehicles = async () => {
+    try {
+      const vehiclesData = await getAllVehicles();
+      const vehiclesMapData = {};
+      vehiclesData.forEach(vehicle => {
+        vehiclesMapData[vehicle.id] = vehicle;
+      });
+      setVehiclesMap(vehiclesMapData);
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
     }
   };
 
@@ -115,7 +139,7 @@ const Parts = () => {
                 <td className="p-2">{part.description}</td>
                 <td className="p-2">{part.category}</td>
                 <td className="p-2">{part.stock_level}</td>
-                <td className="p-2">${part.cost.toFixed(2)}</td>
+                <td className="p-2">{formatCost(part.cost)}</td>
                 <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
                 </td>
@@ -129,7 +153,7 @@ const Parts = () => {
                     <p><strong>Supplier ID:</strong> {part.supplier_id}</p>
                     <p><strong>Location ID:</strong> {part.location_id}</p>
                     <p><strong>Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
-                    <p><strong>Associated Vehicle:</strong> {part.vehicle_id ? `${vehicles.find(v => v.id === part.vehicle_id)?.make} ${vehicles.find(v => v.id === part.vehicle_id)?.model} (${vehicles.find(v => v.id === part.vehicle_id)?.license_plate})` : 'N/A'}</p>
+                    <p><strong>Associated Vehicle:</strong> {part.vehicle_id ? getAssociatedVehicle(part.vehicle_id) : 'N/A'}</p>
                   </td>
                 </tr>
               )}
