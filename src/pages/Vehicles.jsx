@@ -1,42 +1,37 @@
-import React, { useState } from 'react';
-import { FaMotorcycle, FaCar, FaSearch } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from "firebase/firestore";
+import { db } from '../firebase';
+import { initializeFirestore } from '../utils/initialiseFirestore';
 import { Link } from 'react-router-dom';
 
-const VehicleCard = ({ vehicle }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative">
-    <div className="absolute top-2 right-2">
-      {vehicle.type === 'motorcycle' ? (
-        <FaMotorcycle className="text-2xl text-blue-500" />
-      ) : (
-        <FaCar className="text-2xl text-green-500" />
-      )}
-    </div>
-    <h2 className="text-xl font-semibold mb-2">{vehicle.name}</h2>
-    <p className="text-gray-600 dark:text-gray-400">Mileage: {vehicle.mileage}</p>
-    <p className="text-gray-600 dark:text-gray-400">VIN: {vehicle.vin}</p>
-    <Link to={`/vehicles/${vehicle.id}`} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-block">
-      More Info
-    </Link>
-  </div>
-);
-
 const Vehicles = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Updated vehicle data
-  const vehicles = [
-    { id: 1, name: "BMW K75 Cafe Racer", mileage: 45000, vin: "WB1234567K1234567", type: "motorcycle" },
-    { id: 2, name: "KTM 950 Adventure R", mileage: 30000, vin: "VBKVD9409FM123456", type: "motorcycle" },
-    { id: 3, name: "BMW K100", mileage: 55000, vin: "WB1234567K7654321", type: "motorcycle" },
-    { id: 4, name: "Polestar 2", mileage: 15000, vin: "YS3FD5527N1234567", type: "car" },
-    { id: 5, name: "Yamaha XT1200Z", mileage: 20000, vin: "JYARJ16E7LA012345", type: "motorcycle" },
-  ];
+  const fetchVehicles = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "vehicles"));
+      const vehicleList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log("Fetched vehicles:", vehicleList);
+      setVehicles(vehicleList);
+    } catch (err) {
+      console.error("Error fetching vehicles:", err);
+      setError("Failed to fetch vehicles. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredVehicles = vehicles.filter(vehicle => 
-    vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedType === 'all' || vehicle.type === selectedType)
-  );
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  if (loading) return <div>Loading vehicles...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
@@ -46,31 +41,31 @@ const Vehicles = () => {
           Manage Vehicles
         </Link>
       </div>
-      <div className="mb-6 flex space-x-4">
-        <div className="relative flex-grow">
-          <input
-            type="text"
-            placeholder="Search vehicles..."
-            className="w-full p-2 pl-8 pr-4 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <FaSearch className="absolute left-3 top-3 text-gray-400" />
-        </div>
-        <select
-          className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-        >
-          <option value="all">All Types</option>
-          <option value="car">Cars</option>
-          <option value="motorcycle">Motorcycles</option>
-        </select>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredVehicles.map(vehicle => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} />
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-gray-800 shadow-md rounded-lg overflow-hidden">
+          <thead className="bg-gray-700">
+            <tr>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Make</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Model</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Year</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">License Plate</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">VIN</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-600">
+            {vehicles.map((vehicle) => (
+              <tr key={vehicle.id} className="hover:bg-gray-700">
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.make}</td>
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.model}</td>
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.year}</td>
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.license_plate}</td>
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.vin}</td>
+                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
+import { db } from '../firebase';
 
 const ManageProjects = () => {
-  const [projects, setProjects] = useState([
-    // Copy the projects array from Projects.jsx
-  ]);
-
+  const [projects, setProjects] = useState([]);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -16,29 +15,58 @@ const ManageProjects = () => {
     blockedTasks: 0
   });
 
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    const querySnapshot = await getDocs(collection(db, "projects"));
+    const projectList = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setProjects(projectList);
+  };
+
   const handleInputChange = (e) => {
     setNewProject({ ...newProject, [e.target.name]: e.target.value });
   };
 
-  const handleAddProject = () => {
-    setProjects([...projects, { ...newProject, id: Date.now() }]);
-    setNewProject({
-      name: '',
-      description: '',
-      status: '',
-      dueDate: '',
-      completedTasks: 0,
-      inProgressTasks: 0,
-      blockedTasks: 0
-    });
+  const handleAddProject = async () => {
+    try {
+      await addDoc(collection(db, "projects"), newProject);
+      setNewProject({
+        name: '',
+        description: '',
+        status: '',
+        dueDate: '',
+        completedTasks: 0,
+        inProgressTasks: 0,
+        blockedTasks: 0
+      });
+      fetchProjects();
+    } catch (error) {
+      console.error("Error adding project: ", error);
+    }
   };
 
-  const handleEditProject = (id, updatedProject) => {
-    setProjects(projects.map(project => project.id === id ? updatedProject : project));
+  const handleEditProject = async (id, updatedProject) => {
+    try {
+      const projectRef = doc(db, "projects", id);
+      await updateDoc(projectRef, updatedProject);
+      fetchProjects();
+    } catch (error) {
+      console.error("Error updating project: ", error);
+    }
   };
 
-  const handleDeleteProject = (id) => {
-    setProjects(projects.filter(project => project.id !== id));
+  const handleDeleteProject = async (id) => {
+    try {
+      await deleteDoc(doc(db, "projects", id));
+      fetchProjects();
+    } catch (error) {
+      console.error("Error deleting project: ", error);
+    }
   };
 
   return (

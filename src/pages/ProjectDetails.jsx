@@ -1,28 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '../firebase';
 import { FaCheckCircle, FaClock, FaExclamationTriangle, FaUser, FaCalendar } from 'react-icons/fa';
 
 const ProjectDetails = () => {
   const { id } = useParams();
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual data fetching logic later
-  const project = {
-    id: id,
-    name: "Website Redesign",
-    description: "Overhaul the company website with a modern, responsive design",
-    status: "In Progress",
-    startDate: "2023-05-01",
-    dueDate: "2023-08-31",
-    completedTasks: 15,
-    inProgressTasks: 8,
-    blockedTasks: 2,
-    teamMembers: ["Alice", "Bob", "Charlie"],
-    recentUpdates: [
-      { date: "2023-06-15", update: "Completed homepage design" },
-      { date: "2023-06-10", update: "Started work on product pages" },
-      { date: "2023-06-05", update: "Finalized color scheme" },
-    ]
-  };
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const docRef = doc(db, "projects", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setProject({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          console.log("No such project!");
+        }
+      } catch (error) {
+        console.error("Error fetching project: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [id]);
+
+  if (loading) {
+    return <div>Loading project details...</div>;
+  }
+
+  if (!project) {
+    return <div>Project not found</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
