@@ -12,7 +12,8 @@ const collectionsMap = {
   vehicleTypes: collection(db, 'vehicle_types'),
   parts: collection(db, 'parts'),
   tools: collection(db, 'tools'),
-  projects: collection(db, 'projects')
+  projects: collection(db, 'projects'),
+  service_records: collection(db, 'service_records')
 };
 
 // Generic CRUD operations
@@ -269,3 +270,81 @@ export async function getPartsBySupplier(supplierId) {
     throw error;
   }
 }
+
+export const serviceRecordStructure = {
+  service_id: 'auto-generated',
+  vehicle_id: '',
+  service_date: null,
+  service_type: '',
+  mileage: 0,
+  technician: '',
+  description: '',
+  cost: 0,
+  parts_used: [],
+  completed_tasks: [],
+  notes: ''
+};
+
+export const serviceTaskStructure = {
+  task_id: 'auto-generated',
+  task_name: '',
+  description: '',
+  estimated_time: 0,
+  required_parts: []
+};
+
+// Add these functions after the existing CRUD operations
+export const addNewServiceRecord = async (data) => {
+  try {
+    const newDocRef = doc(collectionsMap.service_records);
+    await setDoc(newDocRef, { ...data, id: newDocRef.id });
+    return newDocRef.id;
+  } catch (error) {
+    console.error("Error adding new service record: ", error);
+    throw error;
+  }
+};
+
+export const getServiceRecord = (id) => readDocument('service_records', id);
+export const updateServiceRecord = (id, data) => updateDocument('service_records', id, data);
+export const deleteServiceRecord = (id) => deleteDocument('service_records', id);
+export const getAllServiceRecords = () => getAllDocuments('service_records');
+
+export const addNewServiceTask = (data) => createDocument('service_tasks', data);
+export const getServiceTask = (id) => readDocument('service_tasks', id);
+export const updateServiceTask = (id, data) => updateDocument('service_tasks', id, data);
+export const deleteServiceTask = (id) => deleteDocument('service_tasks', id);
+export const getAllServiceTasks = async () => {
+  try {
+    const ktmTasks = await getAllDocuments('ktmServiceTasks');
+    const yamahaTasks = await getAllDocuments('yamahaTasks');
+    return [...ktmTasks, ...yamahaTasks];
+  } catch (error) {
+    console.error("Error getting all service tasks:", error);
+    throw error;
+  }
+};
+
+export const getServiceRecordsByVehicle = async (vehicleId) => {
+  try {
+    const q = query(collectionsMap.service_records, where("vehicle_id", "==", vehicleId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting service records by vehicle: ", error);
+    throw error;
+  }
+};
+
+export const initializeServiceRecordsCollection = async () => {
+  const serviceRecordsRef = collection(db, 'service_records');
+  const snapshot = await getDocs(serviceRecordsRef);
+  if (snapshot.empty) {
+    // Collection is empty, add a dummy document to initialize it
+    await addDoc(serviceRecordsRef, {
+      dummy: true,
+      createdAt: new Date()
+    });
+    console.log('service_records collection initialized');
+  }
+};

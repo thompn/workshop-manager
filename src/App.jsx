@@ -1,6 +1,7 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { initializeServiceRecordsCollection } from './firebaseOperations';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -15,8 +16,14 @@ import ManageTools from './pages/ManageTools';
 import ManageParts from './pages/ManageParts';
 import ManageProjects from './pages/ManageProjects';
 import ManageVehicles from './pages/ManageVehicles';
+import VehicleDetailsWithService from './pages/VehicleDetailsWithService';
+import AddServiceRecord from './pages/AddServiceRecord';
 
 function App() {
+  useEffect(() => {
+    initializeServiceRecordsCollection();
+  }, []);
+
   return (
     <ThemeProvider>
       <Router>
@@ -33,7 +40,8 @@ function App() {
               <Route path="/projects/:id" element={<ProjectDetails />} />
               <Route path="/projects/manage" element={<ManageProjects />} />
               <Route path="/vehicles" element={<Vehicles />} />
-              <Route path="/vehicles/:id" element={<VehicleDetails />} />
+              <Route path="/vehicles/:id" element={<VehicleDetailsWithService />} />
+              <Route path="/vehicles/:id/add-service" element={<AddServiceRecord />} />
               <Route path="/vehicles/manage" element={<ManageVehicles />} />
               <Route path="/parts" element={<Parts />} />
               <Route path="/parts/manage" element={<ManageParts />} />
