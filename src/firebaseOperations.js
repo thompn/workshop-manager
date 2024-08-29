@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, addDoc, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 
 // Reference to the collections
 const vehiclesCollection = collection(db, 'vehicles');
@@ -164,6 +164,85 @@ export async function getVehicle(vehicleId) {
     }
   } catch (error) {
     console.error("Error getting vehicle: ", error);
+    throw error;
+  }
+}
+
+// Parts CRUD operations
+export async function addNewPart(partData) {
+  try {
+    const docRef = await addDoc(partsCollection, partData);
+    console.log("Part added with ID: ", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding part: ", error);
+    throw error;
+  }
+}
+
+export async function getPart(partId) {
+  try {
+    const partDoc = await getDoc(doc(partsCollection, partId));
+    if (partDoc.exists()) {
+      return { id: partDoc.id, ...partDoc.data() };
+    } else {
+      console.log("No such part!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting part: ", error);
+    throw error;
+  }
+}
+
+export async function updatePart(partId, partData) {
+  try {
+    await updateDoc(doc(partsCollection, partId), partData);
+    console.log("Part updated successfully");
+  } catch (error) {
+    console.error("Error updating part: ", error);
+    throw error;
+  }
+}
+
+export async function deletePart(partId) {
+  try {
+    await deleteDoc(doc(partsCollection, partId));
+    console.log("Part deleted successfully");
+  } catch (error) {
+    console.error("Error deleting part: ", error);
+    throw error;
+  }
+}
+
+export async function getAllParts() {
+  try {
+    const querySnapshot = await getDocs(partsCollection);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting all parts: ", error);
+    throw error;
+  }
+}
+
+export async function getPartsByCategory(category) {
+  try {
+    const q = query(partsCollection, where("category", "==", category));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting parts by category: ", error);
+    throw error;
+  }
+}
+
+export async function getPartsLowOnStock(threshold) {
+  try {
+    const q = query(partsCollection, where("stock_level", "<=", threshold));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting parts low on stock: ", error);
     throw error;
   }
 }

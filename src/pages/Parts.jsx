@@ -1,28 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { getAllParts, getPartsByCategory, getPartsLowOnStock } from '../firebaseOperations';
 
 const Parts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState(null);
   const [category, setCategory] = useState('all');
+  const [parts, setParts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
 
-  // Mock data - replace with actual data from backend later
-  const partsData = [
-    { id: 1, name: 'Spark Plug', category: 'Engine', quantity: 50, price: 9.99 },
-    { id: 2, name: 'Oil Filter', category: 'Engine', quantity: 30, price: 14.99 },
-    { id: 3, name: 'Brake Pad', category: 'Brakes', quantity: 20, price: 39.99 },
-    { id: 4, name: 'Air Filter', category: 'Engine', quantity: 25, price: 19.99 },
-    { id: 5, name: 'Timing Belt', category: 'Engine', quantity: 10, price: 29.99 },
-    // Add more mock data here...
-  ];
+  useEffect(() => {
+    fetchParts();
+  }, [category]);
+
+  const fetchParts = async () => {
+    setLoading(true);
+    try {
+      let partsData;
+      if (category === 'all') {
+        partsData = await getAllParts();
+      } else if (category === 'low_stock') {
+        partsData = await getPartsLowOnStock(10); // Assuming 10 as the threshold
+      } else {
+        partsData = await getPartsByCategory(category);
+      }
+      setParts(partsData);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(partsData.map(part => part.category))];
+      setCategories(['all', 'low_stock', ...uniqueCategories]);
+    } catch (error) {
+      console.error("Error fetching parts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const itemsPerPage = 10;
 
-  const filteredParts = partsData.filter(part => 
-    part.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (category === 'all' || part.category === category)
+  const filteredParts = parts.filter(part => 
+    part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    part.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
@@ -33,6 +54,10 @@ const Parts = () => {
   const handleRowClick = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
+
+  if (loading) {
+    return <div className="text-center mt-8">Loading parts...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -59,20 +84,23 @@ const Parts = () => {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="all">All Categories</option>
-          <option value="Engine">Engine</option>
-          <option value="Brakes">Brakes</option>
-          {/* Add more categories as needed */}
+          {categories.map(cat => (
+            <option key={cat} value={cat}>
+              {cat === 'all' ? 'All Categories' : cat === 'low_stock' ? 'Low Stock' : cat}
+            </option>
+          ))}
         </select>
       </div>
 
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-200 dark:bg-gray-700">
-            <th className="p-2 text-left">Name</th>
+            <th className="p-2 text-left">Part Number (OEM)</th>
+            <th className="p-2 text-left">Description</th>
             <th className="p-2 text-left">Category</th>
-            <th className="p-2 text-left">Quantity</th>
-            <th className="p-2 text-left">Price</th>
+            <th className="p-2 text-left">Stock Level</th>
+            <th className="p-2 text-left">Cost</th>
+            <th className="p-2 text-left"></th>
           </tr>
         </thead>
         <tbody>
@@ -82,23 +110,24 @@ const Parts = () => {
                 className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => handleRowClick(part.id)}
               >
-                <td className="p-2">{part.name}</td>
+                <td className="p-2">{part.part_number_oem}</td>
+                <td className="p-2">{part.description}</td>
                 <td className="p-2">{part.category}</td>
-                <td className="p-2">{part.quantity}</td>
-                <td className="p-2">${part.price.toFixed(2)}</td>
+                <td className="p-2">{part.stock_level}</td>
+                <td className="p-2">${part.cost.toFixed(2)}</td>
                 <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
                 </td>
               </tr>
               {expandedRow === part.id && (
                 <tr>
-                  <td colSpan="5" className="p-4 bg-gray-50 dark:bg-gray-900">
-                    <h3 className="text-lg font-semibold mb-2">{part.name} Details</h3>
-                    <p><strong>ID:</strong> {part.id}</p>
-                    <p><strong>Description:</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    <p><strong>Manufacturer:</strong> Example Manufacturer</p>
-                    <p><strong>Compatibility:</strong> Various models (check specific vehicle requirements)</p>
-                    {/* Add more details as needed */}
+                  <td colSpan="6" className="p-4 bg-gray-50 dark:bg-gray-900">
+                    <h3 className="text-lg font-semibold mb-2">{part.description} Details</h3>
+                    <p><strong>Part Number (Vendor):</strong> {part.part_number_vendor}</p>
+                    <p><strong>Reorder Threshold:</strong> {part.reorder_threshold}</p>
+                    <p><strong>Supplier ID:</strong> {part.supplier_id}</p>
+                    <p><strong>Location ID:</strong> {part.location_id}</p>
+                    <p><strong>Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
                   </td>
                 </tr>
               )}
@@ -107,6 +136,7 @@ const Parts = () => {
         </tbody>
       </table>
 
+      {/* Pagination controls */}
       <div className="mt-6 flex justify-between items-center">
         <button
           className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
