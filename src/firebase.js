@@ -10,9 +10,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-console.log("Firebase config:", firebaseConfig); // For debugging
-
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
+
+// Get Firestore instance
 const db = getFirestore(app);
 
+// Export the Firestore instance
 export { db };
+
+// Export a function to get the Firestore instance (useful for testing and mocking)
+export const getFirestoreInstance = () => db;
+

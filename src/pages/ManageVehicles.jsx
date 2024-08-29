@@ -55,7 +55,6 @@ const ManageVehicles = () => {
       description: ''
     }
   });
-
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedVehicle, setExpandedVehicle] = useState(null);
@@ -83,8 +82,12 @@ const ManageVehicles = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    setNewVehicle({ ...newVehicle, [e.target.name]: e.target.value });
+  const handleInputChange = (e, vehicleState, setVehicleState) => {
+    const { name, value, type, checked } = e.target;
+    setVehicleState(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : type === 'number' ? Math.max(0, parseFloat(value) || 0) : value
+    }));
   };
 
   const handleAddVehicle = async () => {
@@ -141,6 +144,7 @@ const ManageVehicles = () => {
         }
       });
       fetchVehicles();
+      setShowAddForm(false);
     } catch (error) {
       console.error("Error adding vehicle:", error);
     }
@@ -205,10 +209,93 @@ const ManageVehicles = () => {
       .join(' ');
   };
 
+  const formatCost = (value) => {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+  };
+
+  const renderVehicleForm = (vehicle, setVehicle, submitHandler, buttonText) => (
+    <div className="grid grid-cols-2 gap-4">
+      {[
+        { name: "license_plate", label: "License Plate", type: "text" },
+        { name: "vin", label: "VIN", type: "text" },
+        { name: "make", label: "Make", type: "text" },
+        { name: "model", label: "Model", type: "text" },
+        { name: "year", label: "Year", type: "number" },
+        { name: "current_mileage", label: "Current Mileage", type: "number" },
+        { name: "color", label: "Color", type: "text" },
+        { name: "vehicle_type", label: "Vehicle Type", type: "text" },
+        { name: "purchase_date", label: "Purchase Date", type: "date" },
+        { name: "status", label: "Status", type: "text" },
+        { name: "engine_type", label: "Engine Type", type: "text" },
+        { name: "fuel_type", label: "Fuel Type", type: "text" },
+        { name: "transmission_type", label: "Transmission Type", type: "text" },
+        { name: "seating_capacity", label: "Seating Capacity", type: "number" },
+        { name: "cargo_volume", label: "Cargo Volume", type: "number" },
+        { name: "insurance_provider", label: "Insurance Provider", type: "text" },
+        { name: "insurance_policy_number", label: "Insurance Policy Number", type: "text" },
+      ].map((field) => (
+        field.name === "cost" ? (
+          <div key={field.name} className="flex flex-col">
+            <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={field.name}
+              name={field.name}
+              value={vehicle[field.name]}
+              onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+            <span className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {formatCost(vehicle[field.name])}
+            </span>
+          </div>
+        ) : (
+          <div key={field.name} className="flex flex-col">
+            <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={field.name}
+              name={field.name}
+              value={vehicle[field.name]}
+              onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+        )
+      ))}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="insured"
+          name="insured"
+          checked={vehicle.insured}
+          onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+          className="mr-2"
+        />
+        <label htmlFor="insured" className="text-gray-800 dark:text-white">Insured</label>
+      </div>
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="gps_tracking_enabled"
+          name="gps_tracking_enabled"
+          checked={vehicle.gps_tracking_enabled}
+          onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+          className="mr-2"
+        />
+        <label htmlFor="gps_tracking_enabled" className="text-gray-800 dark:text-white">GPS Tracking Enabled</label>
+      </div>
+    </div>
+  );
+
   return (
-    <div>
+    <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Vehicles</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Manage Vehicles</h1>
         <div>
           <button
             onClick={toggleAddForm}
@@ -223,176 +310,9 @@ const ManageVehicles = () => {
       </div>
 
       {showAddForm && (
-        <div className="mb-8 p-4 bg-gray-800 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4 text-white">Add New Vehicle</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="license_plate"
-              placeholder="License Plate"
-              value={newVehicle.license_plate}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="vin"
-              placeholder="VIN"
-              value={newVehicle.vin}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="make"
-              placeholder="Make"
-              value={newVehicle.make}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="model"
-              placeholder="Model"
-              value={newVehicle.model}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="number"
-              name="year"
-              placeholder="Year"
-              value={newVehicle.year}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="number"
-              name="current_mileage"
-              placeholder="Current Mileage"
-              value={newVehicle.current_mileage}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="color"
-              placeholder="Color"
-              value={newVehicle.color}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="vehicle_type"
-              placeholder="Vehicle Type"
-              value={newVehicle.vehicle_type}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="date"
-              name="purchase_date"
-              placeholder="Purchase Date"
-              value={newVehicle.purchase_date}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="status"
-              placeholder="Status"
-              value={newVehicle.status}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="engine_type"
-              placeholder="Engine Type"
-              value={newVehicle.engine_type}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="fuel_type"
-              placeholder="Fuel Type"
-              value={newVehicle.fuel_type}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="transmission_type"
-              placeholder="Transmission Type"
-              value={newVehicle.transmission_type}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="number"
-              name="seating_capacity"
-              placeholder="Seating Capacity"
-              value={newVehicle.seating_capacity}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="number"
-              name="cargo_volume"
-              placeholder="Cargo Volume"
-              value={newVehicle.cargo_volume}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="insured"
-                checked={newVehicle.insured}
-                onChange={(e) => {
-                  setNewVehicle({
-                    ...newVehicle,
-                    insured: e.target.checked,
-                    showInsuranceFields: e.target.checked
-                  });
-                }}
-                className="mr-2"
-              />
-              <label className="text-white">Insured</label>
-            </div>
-            {newVehicle.insured && (
-              <>
-                <input
-                  type="text"
-                  name="insurance_provider"
-                  placeholder="Insurance Provider"
-                  value={newVehicle.insurance_provider}
-                  onChange={handleInputChange}
-                  className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-                />
-                <input
-                  type="text"
-                  name="insurance_policy_number"
-                  placeholder="Insurance Policy Number"
-                  value={newVehicle.insurance_policy_number}
-                  onChange={handleInputChange}
-                  className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-                />
-              </>
-            )}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="gps_tracking_enabled"
-                checked={newVehicle.gps_tracking_enabled}
-                onChange={(e) => setNewVehicle({...newVehicle, gps_tracking_enabled: e.target.checked})}
-                className="mr-2"
-              />
-              <label className="text-white">GPS Tracking Enabled</label>
-            </div>
-          </div>
+        <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Vehicle</h2>
+          {renderVehicleForm(newVehicle, setNewVehicle, handleAddVehicle, "Add Vehicle")}
           <button
             onClick={handleAddVehicle}
             className="mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
@@ -403,30 +323,30 @@ const ManageVehicles = () => {
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold p-4">Existing Vehicles</h2>
+        <h2 className="text-2xl font-bold p-4 text-gray-800 dark:text-white">Existing Vehicles</h2>
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-700">
-              <th className="p-2 text-left text-white">License Plate</th>
-              <th className="p-2 text-left text-white">Make</th>
-              <th className="p-2 text-left text-white">Model</th>
-              <th className="p-2 text-left text-white">Year</th>
-              <th className="p-2 text-left text-white">Status</th>
-              <th className="p-2 text-left text-white">Actions</th>
+            <tr className="bg-gray-200 dark:bg-gray-700">
+              <th className="p-2 text-left text-gray-800 dark:text-white">License Plate</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Make</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Model</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Year</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Status</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
             </tr>
           </thead>
           <tbody>
             {vehicles.map(vehicle => (
               <React.Fragment key={vehicle.id}>
                 <tr 
-                  className="border-b border-gray-600 cursor-pointer hover:bg-gray-700"
+                  className="border-b border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => toggleExpandVehicle(vehicle.id)}
                 >
-                  <td className="p-2 text-white">{vehicle.license_plate}</td>
-                  <td className="p-2 text-white">{vehicle.make}</td>
-                  <td className="p-2 text-white">{vehicle.model}</td>
-                  <td className="p-2 text-white">{vehicle.year}</td>
-                  <td className="p-2 text-white">{vehicle.status}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{vehicle.license_plate}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{vehicle.make}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{vehicle.model}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{vehicle.year}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{vehicle.status}</td>
                   <td className="p-2">
                     <button
                       onClick={(e) => handleEditClick(e, vehicle)}
@@ -447,40 +367,38 @@ const ManageVehicles = () => {
                 </tr>
                 {expandedVehicle === vehicle.id && (
                   <tr>
-                    <td colSpan="6" className="p-4 bg-gray-900">
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(vehicle).map(([key, value]) => (
-                          key !== 'id' && (
-                            <div key={key} className="text-white">
-                              <strong>{formatFieldName(key)}:</strong>
-                              {editingVehicle === vehicle.id ? (
-                                <input
-                                  type="text"
-                                  value={value}
-                                  onChange={(e) => handleEditInputChange(e, vehicle.id, key)}
-                                  className="ml-2 p-1 bg-gray-700 rounded"
-                                />
-                              ) : (
+                    <td colSpan="6" className="p-4 bg-gray-100 dark:bg-gray-900">
+                      {editingVehicle === vehicle.id ? (
+                        <>
+                          {renderVehicleForm(vehicle, (updatedVehicle) => {
+                            const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
+                            setVehicles(updatedVehicles);
+                          }, handleSaveEdit, "Save Changes")}
+                          <div className="mt-4">
+                            <button
+                              onClick={() => handleSaveEdit(vehicle.id)}
+                              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingVehicle(null)}
+                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                          {Object.entries(vehicle).map(([key, value]) => (
+                            key !== 'id' && (
+                              <div key={key} className="text-gray-800 dark:text-white">
+                                <strong>{formatFieldName(key)}:</strong>
                                 <span className="ml-2">{value.toString()}</span>
-                              )}
-                            </div>
-                          )
-                        ))}
-                      </div>
-                      {editingVehicle === vehicle.id && (
-                        <div className="mt-4">
-                          <button
-                            onClick={() => handleSaveEdit(vehicle.id)}
-                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingVehicle(null)}
-                            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-                          >
-                            Cancel
-                          </button>
+                              </div>
+                            )
+                          ))}
                         </div>
                       )}
                     </td>
