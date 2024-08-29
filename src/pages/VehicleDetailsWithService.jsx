@@ -134,7 +134,7 @@ const VehicleDetailsWithService = () => {
                   </tr>
                   {expandedRecord === record.id && (
                     <tr>
-                      <td colSpan="5" className="p-4 bg-gray-50 dark:bg-gray-900">
+                      <td colSpan="5" className="p-6 bg-gray-50 dark:bg-gray-900">
                         {editingRecord && editingRecord.id === record.id ? (
                           <EditServiceRecordForm
                             record={editingRecord}
@@ -142,19 +142,28 @@ const VehicleDetailsWithService = () => {
                             onCancel={() => setEditingRecord(null)}
                           />
                         ) : (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-semibold mb-2">Service Details</h4>
-                              <p><FaUser className="inline mr-2" /> <strong>Technician:</strong> {record.technician}</p>
-                              <p><strong>Description:</strong> {record.description}</p>
-                              <p><strong>Notes:</strong> {record.notes || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold mb-2">Parts and Tasks</h4>
+                          <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                              <h4 className="text-xl font-semibold mb-4">Service Details</h4>
+                              <p className="flex items-center">
+                                <FaUser className="inline mr-3" /> 
+                                <span><strong>Technician:</strong> {record.technician}</span>
+                              </p>
                               <div>
-                                <strong>Parts Used:</strong>
+                                <strong>Description:</strong>
+                                <p className="mt-1">{record.description}</p>
+                              </div>
+                              <div>
+                                <strong>Notes:</strong>
+                                <p className="mt-1">{record.notes || 'N/A'}</p>
+                              </div>
+                            </div>
+                            <div className="space-y-6">
+                              <h4 className="text-xl font-semibold mb-4">Parts and Tasks</h4>
+                              <div>
+                                <strong className="block mb-2">Parts Used:</strong>
                                 {record.parts_used && record.parts_used.length > 0 ? (
-                                  <ul className="list-disc pl-5">
+                                  <ul className="list-disc pl-5 space-y-1">
                                     {record.parts_used.map((part, index) => (
                                       <li key={index}>{part}</li>
                                     ))}
@@ -163,10 +172,10 @@ const VehicleDetailsWithService = () => {
                                   <p>No parts recorded</p>
                                 )}
                               </div>
-                              <div className="mt-2">
-                                <strong>Completed Tasks:</strong>
+                              <div>
+                                <strong className="block mb-2">Completed Tasks:</strong>
                                 {record.completed_tasks && record.completed_tasks.length > 0 ? (
-                                  <ul className="list-disc pl-5">
+                                  <ul className="list-disc pl-5 space-y-1">
                                     {record.completed_tasks.map((task, index) => (
                                       <li key={index}>{task}</li>
                                     ))}
