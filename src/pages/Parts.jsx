@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles } from '../firebaseOperations';
+import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles, getAllSuppliers } from '../firebaseOperations';
 
 const Parts = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,6 +9,7 @@ const Parts = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [category, setCategory] = useState('all');
   const [parts, setParts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -26,6 +27,7 @@ const Parts = () => {
   useEffect(() => {
     fetchParts();
     fetchVehicles();
+    fetchSuppliers();
   }, [category]);
 
   const fetchParts = async () => {
@@ -61,6 +63,15 @@ const Parts = () => {
       setVehiclesMap(vehiclesMapData);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const suppliersData = await getAllSuppliers();
+      setSuppliers(suppliersData);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
     }
   };
 
@@ -117,15 +128,15 @@ const Parts = () => {
         </select>
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-200 dark:bg-gray-700">
+      <table className="w-full bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <thead className="bg-gray-200 dark:bg-gray-700">
+          <tr>
             <th className="p-2 text-left">Part Number (OEM)</th>
             <th className="p-2 text-left">Description</th>
             <th className="p-2 text-left">Category</th>
             <th className="p-2 text-left">Stock Level</th>
-            <th className="p-2 text-left">Cost</th>
-            <th className="p-2 text-left"></th>
+            <th className="p-2 text-left">Supplier</th>
+            <th className="p-2 text-left">Invoice Number</th>
           </tr>
         </thead>
         <tbody>
@@ -139,7 +150,20 @@ const Parts = () => {
                 <td className="p-2">{part.description}</td>
                 <td className="p-2">{part.category}</td>
                 <td className="p-2">{part.stock_level}</td>
-                <td className="p-2">{formatCost(part.cost)}</td>
+                <td className="p-2">
+                  {(() => {
+                    const supplier = suppliers.find(s => s.id === part.supplier_id);
+                    if (supplier) {
+                      return supplier.website ? (
+                        <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                          {supplier.name}
+                        </a>
+                      ) : supplier.name;
+                    }
+                    return 'N/A';
+                  })()}
+                </td>
+                <td className="p-2">{part.invoice_number || 'N/A'}</td>
                 <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
                 </td>
@@ -150,7 +174,19 @@ const Parts = () => {
                     <h3 className="text-lg font-semibold mb-2">{part.description} Details</h3>
                     <p><strong>Part Number (Vendor):</strong> {part.part_number_vendor}</p>
                     <p><strong>Reorder Threshold:</strong> {part.reorder_threshold}</p>
-                    <p><strong>Supplier ID:</strong> {part.supplier_id}</p>
+                    <p><strong>Supplier:</strong> {
+                      (() => {
+                        const supplier = suppliers.find(s => s.id === part.supplier_id);
+                        if (supplier) {
+                          return supplier.website ? (
+                            <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                              {supplier.name}
+                            </a>
+                          ) : supplier.name;
+                        }
+                        return 'N/A';
+                      })()
+                    }</p>
                     <p><strong>Location ID:</strong> {part.location_id}</p>
                     <p><strong>Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
                     <p><strong>Associated Vehicle:</strong> {part.vehicle_id ? getAssociatedVehicle(part.vehicle_id) : 'N/A'}</p>
