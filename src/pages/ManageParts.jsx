@@ -37,6 +37,7 @@ const ManageParts = () => {
   });
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [suppliersList, setSuppliersList] = useState([]);
+  const [showPartsTable, setShowPartsTable] = useState(true);
 
   useEffect(() => {
     fetchParts();
@@ -72,11 +73,11 @@ const ManageParts = () => {
     }
   };
 
-  const handleInputChange = (e, partState, setPartState) => {
+  const handleInputChange = (e, state, setState) => {
     const { name, value, type, checked } = e.target;
-    setPartState(prev => ({
+    setState(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? Math.max(0, parseFloat(value) || 0) : value
+      [name]: type === 'checkbox' ? checked : type === 'number' ? (value === '' ? '' : Number(value)) : value
     }));
   };
 
@@ -266,7 +267,7 @@ const ManageParts = () => {
             <textarea
               id={field.name}
               name={field.name}
-              value={supplier[field.name]}
+              value={supplier[field.name] || ''}
               onChange={(e) => handleInputChange(e, supplier, setSupplier)}
               className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
@@ -275,7 +276,7 @@ const ManageParts = () => {
               type={field.type}
               id={field.name}
               name={field.name}
-              value={supplier[field.name]}
+              value={supplier[field.name] || ''}
               onChange={(e) => handleInputChange(e, supplier, setSupplier)}
               className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
@@ -344,7 +345,10 @@ const ManageParts = () => {
             {showAddForm ? 'Hide Add Form' : 'Add Part'}
           </button>
           <button
-            onClick={() => setShowSupplierForm(!showSupplierForm)}
+            onClick={() => {
+              setShowSupplierForm(!showSupplierForm);
+              setShowPartsTable(showSupplierForm);
+            }}
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
           >
             {showSupplierForm ? 'Hide Supplier Form' : 'Manage Suppliers'}
@@ -381,62 +385,66 @@ const ManageParts = () => {
         </div>
       )}
 
-      {/* List of existing parts */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Parts</h2>
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-200 dark:bg-gray-700">
-              <th className="p-2 text-left text-gray-800 dark:text-white">Part Number (OEM)</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Description</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Category</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Stock Level</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Vehicle</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parts.map(part => (
-              <tr key={part.id} className="border-b border-gray-200 dark:border-gray-700">
-                <td className="p-2 text-gray-800 dark:text-white">{part.part_number_oem}</td>
-                <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
-                <td className="p-2 text-gray-800 dark:text-white">{part.category}</td>
-                <td className="p-2 text-gray-800 dark:text-white">{part.stock_level}</td>
-                <td className="p-2 text-gray-800 dark:text-white">
-                  {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
-                </td>
-                <td className="p-2">
-                  <button
-                    onClick={() => setEditingPart(part)}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeletePart(part.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {showPartsTable && (
+        <>
+          {/* List of existing parts */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Parts</h2>
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-200 dark:bg-gray-700">
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Part Number (OEM)</th>
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Description</th>
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Category</th>
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Stock Level</th>
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Vehicle</th>
+                  <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {parts.map(part => (
+                  <tr key={part.id} className="border-b border-gray-200 dark:border-gray-700">
+                    <td className="p-2 text-gray-800 dark:text-white">{part.part_number_oem}</td>
+                    <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
+                    <td className="p-2 text-gray-800 dark:text-white">{part.category}</td>
+                    <td className="p-2 text-gray-800 dark:text-white">{part.stock_level}</td>
+                    <td className="p-2 text-gray-800 dark:text-white">
+                      {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
+                    </td>
+                    <td className="p-2">
+                      <button
+                        onClick={() => setEditingPart(part)}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePart(part.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Edit part form */}
-      {editingPart && (
-        <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Part</h2>
-          {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
-          <button
-            onClick={handleEditPart}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Save Changes
-          </button>
-        </div>
+          {/* Edit part form */}
+          {editingPart && (
+            <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Part</h2>
+              {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
+              <button
+                onClick={handleEditPart}
+                className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Save Changes
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {renderSuppliersList()}

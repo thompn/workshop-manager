@@ -150,7 +150,19 @@ const Parts = () => {
                 <td className="p-2">{part.description}</td>
                 <td className="p-2">{part.category}</td>
                 <td className="p-2">{part.stock_level}</td>
-                <td className="p-2">{suppliers.find(s => s.id === part.supplier_id)?.name || 'N/A'}</td>
+                <td className="p-2">
+                  {(() => {
+                    const supplier = suppliers.find(s => s.id === part.supplier_id);
+                    if (supplier) {
+                      return supplier.website ? (
+                        <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                          {supplier.name}
+                        </a>
+                      ) : supplier.name;
+                    }
+                    return 'N/A';
+                  })()}
+                </td>
                 <td className="p-2">{part.invoice_number || 'N/A'}</td>
                 <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
@@ -162,7 +174,19 @@ const Parts = () => {
                     <h3 className="text-lg font-semibold mb-2">{part.description} Details</h3>
                     <p><strong>Part Number (Vendor):</strong> {part.part_number_vendor}</p>
                     <p><strong>Reorder Threshold:</strong> {part.reorder_threshold}</p>
-                    <p><strong>Supplier ID:</strong> {part.supplier_id}</p>
+                    <p><strong>Supplier:</strong> {
+                      (() => {
+                        const supplier = suppliers.find(s => s.id === part.supplier_id);
+                        if (supplier) {
+                          return supplier.website ? (
+                            <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                              {supplier.name}
+                            </a>
+                          ) : supplier.name;
+                        }
+                        return 'N/A';
+                      })()
+                    }</p>
                     <p><strong>Location ID:</strong> {part.location_id}</p>
                     <p><strong>Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
                     <p><strong>Associated Vehicle:</strong> {part.vehicle_id ? getAssociatedVehicle(part.vehicle_id) : 'N/A'}</p>
