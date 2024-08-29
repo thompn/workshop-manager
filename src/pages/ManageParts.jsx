@@ -101,7 +101,7 @@ const ManageParts = () => {
         placeholder="OEM Part Number"
         value={part.part_number_oem}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="text"
@@ -109,7 +109,7 @@ const ManageParts = () => {
         placeholder="Vendor Part Number"
         value={part.part_number_vendor}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="text"
@@ -117,7 +117,7 @@ const ManageParts = () => {
         placeholder="Description"
         value={part.description}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="text"
@@ -125,7 +125,7 @@ const ManageParts = () => {
         placeholder="Category"
         value={part.category}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="number"
@@ -133,7 +133,7 @@ const ManageParts = () => {
         placeholder="Cost"
         value={part.cost}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="number"
@@ -141,7 +141,7 @@ const ManageParts = () => {
         placeholder="Stock Level"
         value={part.stock_level}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="number"
@@ -149,7 +149,7 @@ const ManageParts = () => {
         placeholder="Reorder Threshold"
         value={part.reorder_threshold}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="text"
@@ -157,7 +157,7 @@ const ManageParts = () => {
         placeholder="Supplier ID"
         value={part.supplier_id}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <input
         type="text"
@@ -165,7 +165,7 @@ const ManageParts = () => {
         placeholder="Location ID"
         value={part.location_id}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
       />
       <div className="flex items-center">
         <input
@@ -175,13 +175,13 @@ const ManageParts = () => {
           onChange={(e) => handleInputChange(e, part, setPart)}
           className="mr-2"
         />
-        <label htmlFor="consumable" className="text-white">Consumable</label>
+        <label htmlFor="consumable" className="text-gray-800 dark:text-white">Consumable</label>
       </div>
       <select
         name="vehicle_id"
         value={part.vehicle_id}
         onChange={(e) => handleInputChange(e, part, setPart)}
-        className="p-2 border rounded bg-gray-700 text-white"
+        className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
       >
         <option value="">Select Vehicle</option>
         {vehicles.map(vehicle => (
@@ -196,15 +196,15 @@ const ManageParts = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Parts</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Manage Parts</h1>
         <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
           Back to Parts
         </Link>
       </div>
 
       {/* Form to add new part */}
-      <div className="mb-8 p-4 bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4">Add New Part</h2>
+      <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Part</h2>
         {renderPartForm(newPart, setNewPart, handleAddPart, "Add Part")}
         <button
           onClick={handleAddPart}
@@ -215,27 +215,27 @@ const ManageParts = () => {
       </div>
 
       {/* List of existing parts */}
-      <div className="bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4 p-4">Existing Parts</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Parts</h2>
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-700">
-              <th className="p-2 text-left">Part Number (OEM)</th>
-              <th className="p-2 text-left">Description</th>
-              <th className="p-2 text-left">Category</th>
-              <th className="p-2 text-left">Stock Level</th>
-              <th className="p-2 text-left">Vehicle</th>
-              <th className="p-2 text-left">Actions</th>
+            <tr className="bg-gray-200 dark:bg-gray-700">
+              <th className="p-2 text-left text-gray-800 dark:text-white">Part Number (OEM)</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Description</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Category</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Stock Level</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Vehicle</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
             </tr>
           </thead>
           <tbody>
             {parts.map(part => (
-              <tr key={part.id} className="border-b border-gray-700">
-                <td className="p-2">{part.part_number_oem}</td>
-                <td className="p-2">{part.description}</td>
-                <td className="p-2">{part.category}</td>
-                <td className="p-2">{part.stock_level}</td>
-                <td className="p-2">
+              <tr key={part.id} className="border-b border-gray-200 dark:border-gray-700">
+                <td className="p-2 text-gray-800 dark:text-white">{part.part_number_oem}</td>
+                <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
+                <td className="p-2 text-gray-800 dark:text-white">{part.category}</td>
+                <td className="p-2 text-gray-800 dark:text-white">{part.stock_level}</td>
+                <td className="p-2 text-gray-800 dark:text-white">
                   {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
                 </td>
                 <td className="p-2">
@@ -260,8 +260,8 @@ const ManageParts = () => {
 
       {/* Edit part form */}
       {editingPart && (
-        <div className="mt-8 p-4 bg-gray-800 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">Edit Part</h2>
+        <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Part</h2>
           {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
           <button
             onClick={handleEditPart}
