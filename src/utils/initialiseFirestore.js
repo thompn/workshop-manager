@@ -24,7 +24,35 @@ export const initializeFirestore = async () => {
       insured: true,
       insurance_provider: "ABC Insurance",
       insurance_policy_number: "POL123456",
-      gps_tracking_enabled: false
+      gps_tracking_enabled: false,
+      vehicle_type_details: {
+        type_id: 1,
+        vehicle_type: "Sedan"
+      },
+      latest_service: {
+        service_id: "service-1",
+        service_date: "2023-01-15",
+        service_type: "Regular Maintenance",
+        service_mileage: 12000,
+        cost: 150.00,
+        brake_pads_checked: true,
+        oil_checked: true,
+        air_filter_checked: true,
+        chain_checked: false,
+        fuel_lines_checked: true,
+        bearings_checked: true,
+        tires_checked: true,
+        lights_checked: true,
+        battery_checked: true,
+        coolant_level_checked: true,
+        transmission_fluid_checked: true,
+        exhaust_system_checked: true
+      },
+      current_location: {
+        location_id: 1,
+        location_reference: "Main Garage",
+        description: "Central storage facility"
+      }
     });
 
     console.log("Vehicle added with ID: ", vehicleRef.id);

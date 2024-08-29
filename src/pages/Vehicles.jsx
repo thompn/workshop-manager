@@ -3,11 +3,13 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
 import { initializeFirestore } from '../utils/initialiseFirestore';
 import { Link } from 'react-router-dom';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedVehicle, setExpandedVehicle] = useState(null);
 
   const fetchVehicles = async () => {
     try {
@@ -30,6 +32,14 @@ const Vehicles = () => {
     fetchVehicles();
   }, []);
 
+  const toggleExpandVehicle = (vehicleId) => {
+    if (expandedVehicle === vehicleId) {
+      setExpandedVehicle(null);
+    } else {
+      setExpandedVehicle(vehicleId);
+    }
+  };
+
   if (loading) return <div>Loading vehicles...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -51,18 +61,52 @@ const Vehicles = () => {
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">License Plate</th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">VIN</th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-600">
             {vehicles.map((vehicle) => (
-              <tr key={vehicle.id} className="hover:bg-gray-700">
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.make}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.model}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.year}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.license_plate}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.vin}</td>
-                <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.status}</td>
-              </tr>
+              <React.Fragment key={vehicle.id}>
+                <tr 
+                  className="hover:bg-gray-700 cursor-pointer"
+                  onClick={() => toggleExpandVehicle(vehicle.id)}
+                >
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.make}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.model}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.year}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.license_plate}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.vin}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">{vehicle.status}</td>
+                  <td className="py-4 px-6 whitespace-nowrap text-gray-300">
+                    {expandedVehicle === vehicle.id ? <FaChevronUp /> : <FaChevronDown />}
+                  </td>
+                </tr>
+                {expandedVehicle === vehicle.id && (
+                  <tr>
+                    <td colSpan="7" className="p-4 bg-gray-900">
+                      <div className="grid grid-cols-2 gap-4">
+                        <p><strong>Vehicle Type:</strong> {vehicle.vehicle_type}</p>
+                        <p><strong>Current Mileage:</strong> {vehicle.current_mileage}</p>
+                        <p><strong>Color:</strong> {vehicle.color}</p>
+                        <p><strong>Purchase Date:</strong> {vehicle.purchase_date}</p>
+                        <p><strong>Engine Type:</strong> {vehicle.engine_type}</p>
+                        <p><strong>Fuel Type:</strong> {vehicle.fuel_type}</p>
+                        <p><strong>Transmission Type:</strong> {vehicle.transmission_type}</p>
+                        <p><strong>Seating Capacity:</strong> {vehicle.seating_capacity}</p>
+                        <p><strong>Cargo Volume:</strong> {vehicle.cargo_volume}</p>
+                        <p><strong>Insured:</strong> {vehicle.insured ? 'Yes' : 'No'}</p>
+                        {vehicle.insured && (
+                          <>
+                            <p><strong>Insurance Provider:</strong> {vehicle.insurance_provider}</p>
+                            <p><strong>Insurance Policy Number:</strong> {vehicle.insurance_policy_number}</p>
+                          </>
+                        )}
+                        <p><strong>GPS Tracking Enabled:</strong> {vehicle.gps_tracking_enabled ? 'Yes' : 'No'}</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

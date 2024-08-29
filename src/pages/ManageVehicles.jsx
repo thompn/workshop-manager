@@ -25,7 +25,35 @@ const ManageVehicles = () => {
     insured: false,
     insurance_provider: '',
     insurance_policy_number: '',
-    gps_tracking_enabled: false
+    gps_tracking_enabled: false,
+    vehicle_type_details: {
+      type_id: '',
+      vehicle_type: ''
+    },
+    latest_service: {
+      service_id: '',
+      service_date: '',
+      service_type: '',
+      service_mileage: '',
+      cost: '',
+      brake_pads_checked: false,
+      oil_checked: false,
+      air_filter_checked: false,
+      chain_checked: false,
+      fuel_lines_checked: false,
+      bearings_checked: false,
+      tires_checked: false,
+      lights_checked: false,
+      battery_checked: false,
+      coolant_level_checked: false,
+      transmission_fluid_checked: false,
+      exhaust_system_checked: false
+    },
+    current_location: {
+      location_id: '',
+      location_reference: '',
+      description: ''
+    }
   });
 
   const [editingVehicle, setEditingVehicle] = useState(null);
@@ -34,7 +62,7 @@ const ManageVehicles = () => {
 
   const handleEditClick = (e, vehicle) => {
     e.stopPropagation();
-    setEditingVehicle(vehicle.id);
+    setEditingVehicle(prevState => prevState === vehicle.id ? null : vehicle.id);
     setExpandedVehicle(vehicle.id);
   };
 
@@ -82,7 +110,35 @@ const ManageVehicles = () => {
         insured: false,
         insurance_provider: '',
         insurance_policy_number: '',
-        gps_tracking_enabled: false
+        gps_tracking_enabled: false,
+        vehicle_type_details: {
+          type_id: '',
+          vehicle_type: ''
+        },
+        latest_service: {
+          service_id: '',
+          service_date: '',
+          service_type: '',
+          service_mileage: '',
+          cost: '',
+          brake_pads_checked: false,
+          oil_checked: false,
+          air_filter_checked: false,
+          chain_checked: false,
+          fuel_lines_checked: false,
+          bearings_checked: false,
+          tires_checked: false,
+          lights_checked: false,
+          battery_checked: false,
+          coolant_level_checked: false,
+          transmission_fluid_checked: false,
+          exhaust_system_checked: false
+        },
+        current_location: {
+          location_id: '',
+          location_reference: '',
+          description: ''
+        }
       });
       fetchVehicles();
     } catch (error) {
@@ -140,6 +196,13 @@ const ManageVehicles = () => {
     } catch (error) {
       console.error("Error updating vehicle:", error);
     }
+  };
+
+  const formatFieldName = (fieldName) => {
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -288,27 +351,37 @@ const ManageVehicles = () => {
                 type="checkbox"
                 name="insured"
                 checked={newVehicle.insured}
-                onChange={(e) => setNewVehicle({...newVehicle, insured: e.target.checked})}
+                onChange={(e) => {
+                  setNewVehicle({
+                    ...newVehicle,
+                    insured: e.target.checked,
+                    showInsuranceFields: e.target.checked
+                  });
+                }}
                 className="mr-2"
               />
               <label className="text-white">Insured</label>
             </div>
-            <input
-              type="text"
-              name="insurance_provider"
-              placeholder="Insurance Provider"
-              value={newVehicle.insurance_provider}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
-            <input
-              type="text"
-              name="insurance_policy_number"
-              placeholder="Insurance Policy Number"
-              value={newVehicle.insurance_policy_number}
-              onChange={handleInputChange}
-              className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
-            />
+            {newVehicle.insured && (
+              <>
+                <input
+                  type="text"
+                  name="insurance_provider"
+                  placeholder="Insurance Provider"
+                  value={newVehicle.insurance_provider}
+                  onChange={handleInputChange}
+                  className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  name="insurance_policy_number"
+                  placeholder="Insurance Policy Number"
+                  value={newVehicle.insurance_policy_number}
+                  onChange={handleInputChange}
+                  className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400"
+                />
+              </>
+            )}
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -379,7 +452,7 @@ const ManageVehicles = () => {
                         {Object.entries(vehicle).map(([key, value]) => (
                           key !== 'id' && (
                             <div key={key} className="text-white">
-                              <strong>{key}:</strong>
+                              <strong>{formatFieldName(key)}:</strong>
                               {editingVehicle === vehicle.id ? (
                                 <input
                                   type="text"

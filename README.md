@@ -37,10 +37,10 @@ This is a React-based web application for managing a workshop, including project
 
 4. Start the development server:
    ```
-   npm start
+   npm run dev
    ```
 
-5. Open your browser and visit `http://localhost:3000`
+5. Open your browser and visit `http://localhost:5173`
 
 ## Project Structure
 
@@ -48,14 +48,18 @@ This is a React-based web application for managing a workshop, including project
   - `components/`: Reusable React components
   - `context/`: React context for global state management
   - `pages/`: Main page components
+  - `utils/`: Utility functions
   - `App.jsx`: Main application component
-  - `index.js`: Entry point of the application
+  - `main.jsx`: Entry point of the application
 
 ## Technologies Used
 
 - React
 - React Router
 - Tailwind CSS
+- Firebase
+- Vite
+- date-fns
 - React Icons
 
 ## Environment Setup
