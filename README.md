@@ -58,6 +58,30 @@ This is a React-based web application for managing a workshop, including project
 - Tailwind CSS
 - React Icons
 
+## Environment Setup
+
+This project uses environment variables to manage sensitive information. Follow these steps to set up your environment:
+
+1. Copy the `.env.example` file in the project root and rename it to `.env`:
+   ```
+   cp .env.example .env
+   ```
+
+2. Open the `.env` file and replace the placeholder values with your actual Firebase configuration:
+   ```
+   VITE_FIREBASE_API_KEY=your_actual_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_actual_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_actual_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_actual_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_actual_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_actual_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_actual_measurement_id
+   ```
+
+3. Make sure to never commit your `.env` file to version control. It's already included in the `.gitignore` file.
+
+For more information on how to obtain these Firebase configuration values, refer to the Firebase documentation.
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
