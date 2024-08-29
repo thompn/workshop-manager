@@ -23,6 +23,9 @@ const AddServiceRecord = () => {
     notes: ''
   });
 
+  const [partInput, setPartInput] = useState('');
+  const [taskInput, setTaskInput] = useState('');
+
   const fetchVehicleAndServiceTasks = async () => {
     try {
       const vehicleData = await getVehicle(id);
@@ -52,6 +55,40 @@ const AddServiceRecord = () => {
       ? serviceRecord.completed_tasks.filter(id => id !== taskId)
       : [...serviceRecord.completed_tasks, taskId];
     setServiceRecord({ ...serviceRecord, completed_tasks: updatedTasks });
+  };
+
+  const handleAddPart = () => {
+    if (partInput.trim()) {
+      setServiceRecord(prev => ({
+        ...prev,
+        parts_used: [...prev.parts_used, partInput.trim()]
+      }));
+      setPartInput('');
+    }
+  };
+
+  const handleRemovePart = (index) => {
+    setServiceRecord(prev => ({
+      ...prev,
+      parts_used: prev.parts_used.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddTask = () => {
+    if (taskInput.trim()) {
+      setServiceRecord(prev => ({
+        ...prev,
+        completed_tasks: [...prev.completed_tasks, taskInput.trim()]
+      }));
+      setTaskInput('');
+    }
+  };
+
+  const handleRemoveTask = (index) => {
+    setServiceRecord(prev => ({
+      ...prev,
+      completed_tasks: prev.completed_tasks.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -166,23 +203,75 @@ const AddServiceRecord = () => {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-bold mb-2">
+          <label className="block text-sm font-bold mb-2" htmlFor="parts_used">
+            Parts Used
+          </label>
+          <div className="flex">
+            <input
+              type="text"
+              id="parts_used"
+              value={partInput}
+              onChange={(e) => setPartInput(e.target.value)}
+              className="flex-grow p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white mr-2"
+            />
+            <button
+              type="button"
+              onClick={handleAddPart}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            >
+              Add Part
+            </button>
+          </div>
+          <ul className="mt-2">
+            {serviceRecord.parts_used.map((part, index) => (
+              <li key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-2 rounded mb-1">
+                <span>{part}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemovePart(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-bold mb-2" htmlFor="completed_tasks">
             Completed Tasks
           </label>
-          <div className="space-y-2">
-            {serviceTasks.map((task) => (
-              <div key={task.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`task-${task.id}`}
-                  checked={serviceRecord.completed_tasks.includes(task.id)}
-                  onChange={() => handleTaskToggle(task.id)}
-                  className="mr-2"
-                />
-                <label htmlFor={`task-${task.id}`}>{task.task_name}</label>
-              </div>
-            ))}
+          <div className="flex">
+            <input
+              type="text"
+              id="completed_tasks"
+              value={taskInput}
+              onChange={(e) => setTaskInput(e.target.value)}
+              className="flex-grow p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white mr-2"
+            />
+            <button
+              type="button"
+              onClick={handleAddTask}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            >
+              Add Task
+            </button>
           </div>
+          <ul className="mt-2">
+            {serviceRecord.completed_tasks.map((task, index) => (
+              <li key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-2 rounded mb-1">
+                <span>{task}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTask(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="mb-4">
