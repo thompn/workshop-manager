@@ -104,6 +104,7 @@ const ManageParts = () => {
                   placeholder={formatFieldName(key)}
                   value={value}
                   onChange={(e) => handleInputChange(e, part, setPart)}
+                  min={typeof value === 'number' ? 0 : undefined}
                   className="p-2 border rounded bg-gray-700 text-white placeholder-gray-400 w-full"
                 />
                 <div className="absolute hidden group-hover:block bg-gray-800 text-white p-2 rounded shadow-lg z-10 -mt-2 ml-2">
