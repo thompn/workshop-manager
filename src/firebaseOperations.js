@@ -1,17 +1,102 @@
 import { db } from './firebase';
 import { collection, addDoc, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 
-// Reference to the collections
-const vehiclesCollection = collection(db, 'vehicles');
-const serviceDataCollection = collection(db, 'service_data');
-const ktmServiceTasksCollection = collection(db, 'ktm_service_tasks');
-const yamahaTasksCollection = collection(db, 'yamaha_tasks');
-const suppliersCollection = collection(db, 'suppliers');
-const storageLocationCollection = collection(db, 'storage_location');
-const vehicleTypesCollection = collection(db, 'vehicle_types');
-const partsCollection = collection(db, 'parts');
-const toolsCollection = collection(db, 'tools');
+// Collection references
+const collectionsMap = {
+  vehicles: collection(db, 'vehicles'),
+  serviceData: collection(db, 'service_data'),
+  ktmServiceTasks: collection(db, 'ktm_service_tasks'),
+  yamahaTasks: collection(db, 'yamaha_tasks'),
+  suppliers: collection(db, 'suppliers'),
+  storageLocation: collection(db, 'storage_location'),
+  vehicleTypes: collection(db, 'vehicle_types'),
+  parts: collection(db, 'parts'),
+  tools: collection(db, 'tools'),
+  projects: collection(db, 'projects')
+};
 
+// Generic CRUD operations
+const createDocument = async (collectionName, data) => {
+  try {
+    const docRef = await addDoc(collectionsMap[collectionName], data);
+    console.log(`Document added to ${collectionName} with ID: ${docRef.id}`);
+    return docRef.id;
+  } catch (error) {
+    console.error(`Error adding document to ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+const readDocument = async (collectionName, documentId) => {
+  try {
+    const docRef = doc(collectionsMap[collectionName], documentId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      console.log(`No such document in ${collectionName}!`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error reading document from ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+const updateDocument = async (collectionName, documentId, data) => {
+  try {
+    const docRef = doc(collectionsMap[collectionName], documentId);
+    await updateDoc(docRef, data);
+    console.log(`Document updated in ${collectionName} with ID: ${documentId}`);
+  } catch (error) {
+    console.error(`Error updating document in ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+const deleteDocument = async (collectionName, documentId) => {
+  try {
+    await deleteDoc(doc(collectionsMap[collectionName], documentId));
+    console.log(`Document deleted from ${collectionName} with ID: ${documentId}`);
+  } catch (error) {
+    console.error(`Error deleting document from ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+const getAllDocuments = async (collectionName) => {
+  try {
+    const querySnapshot = await getDocs(collectionsMap[collectionName]);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error(`Error getting all documents from ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+// Export generic CRUD operations
+export const addNewDocument = createDocument;
+export const getDocument = readDocument;
+export const updateExistingDocument = updateDocument;
+export const removeDocument = deleteDocument;
+export const getAllDocumentsFromCollection = getAllDocuments;
+
+// Export specific functions for backward compatibility
+export const addNewVehicle = (data) => createDocument('vehicles', data);
+export const getVehicle = (id) => readDocument('vehicles', id);
+export const updateVehicle = (id, data) => updateDocument('vehicles', id, data);
+export const deleteVehicle = (id) => deleteDocument('vehicles', id);
+export const getAllVehicles = () => getAllDocuments('vehicles');
+
+export const addNewPart = (data) => createDocument('parts', data);
+export const getPart = (id) => readDocument('parts', id);
+export const updatePart = (id, data) => updateDocument('parts', id, data);
+export const deletePart = (id) => deleteDocument('parts', id);
+export const getAllParts = () => getAllDocuments('parts');
+
+// Add similar functions for other collections as needed
+
+// Export data structures
 export const vehicleStructure = {
   vehicle_id: 'auto-generated',
   vehicle_type_id: 0,
@@ -139,95 +224,10 @@ export const toolsStructure = {
   next_calibration_due: null
 };
 
-// Add functions for CRUD operations on each collection
-// Example for vehicles:
-
-export async function addNewVehicle(vehicleData) {
-  try {
-    const docRef = await addDoc(vehiclesCollection, vehicleData);
-    console.log("Vehicle added with ID: ", docRef.id);
-    return docRef.id;
-  } catch (error) {
-    console.error("Error adding vehicle: ", error);
-    throw error;
-  }
-}
-
-export async function getVehicle(vehicleId) {
-  try {
-    const vehicleDoc = await getDoc(doc(vehiclesCollection, vehicleId));
-    if (vehicleDoc.exists()) {
-      return { id: vehicleDoc.id, ...vehicleDoc.data() };
-    } else {
-      console.log("No such vehicle!");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error getting vehicle: ", error);
-    throw error;
-  }
-}
-
-// Parts CRUD operations
-export async function addNewPart(partData) {
-  try {
-    const docRef = await addDoc(partsCollection, partData);
-    console.log("Part added with ID: ", docRef.id);
-    return docRef.id;
-  } catch (error) {
-    console.error("Error adding part: ", error);
-    throw error;
-  }
-}
-
-export async function getPart(partId) {
-  try {
-    const partDoc = await getDoc(doc(partsCollection, partId));
-    if (partDoc.exists()) {
-      return { id: partDoc.id, ...partDoc.data() };
-    } else {
-      console.log("No such part!");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error getting part: ", error);
-    throw error;
-  }
-}
-
-export async function updatePart(partId, partData) {
-  try {
-    await updateDoc(doc(partsCollection, partId), partData);
-    console.log("Part updated successfully");
-  } catch (error) {
-    console.error("Error updating part: ", error);
-    throw error;
-  }
-}
-
-export async function deletePart(partId) {
-  try {
-    await deleteDoc(doc(partsCollection, partId));
-    console.log("Part deleted successfully");
-  } catch (error) {
-    console.error("Error deleting part: ", error);
-    throw error;
-  }
-}
-
-export async function getAllParts() {
-  try {
-    const querySnapshot = await getDocs(partsCollection);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
-    console.error("Error getting all parts: ", error);
-    throw error;
-  }
-}
-
+// Additional query functions
 export async function getPartsByCategory(category) {
   try {
-    const q = query(partsCollection, where("category", "==", category));
+    const q = query(collectionsMap.parts, where("category", "==", category));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
@@ -238,7 +238,7 @@ export async function getPartsByCategory(category) {
 
 export async function getPartsLowOnStock(threshold) {
   try {
-    const q = query(partsCollection, where("stock_level", "<=", threshold));
+    const q = query(collectionsMap.parts, where("stock_level", "<=", threshold));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
@@ -246,5 +246,3 @@ export async function getPartsLowOnStock(threshold) {
     throw error;
   }
 }
-
-// Add similar functions for other collections (serviceData, ktmServiceTasks, yamahaTasks, etc.)
