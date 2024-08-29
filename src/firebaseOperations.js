@@ -186,7 +186,8 @@ export const suppliersStructure = {
   state: '',
   postal_code: '',
   country: '',
-  notes: ''
+  notes: '',
+  website: ''
 };
 
 export const storageLocationStructure = {
@@ -212,7 +213,8 @@ export const partsStructure = {
   supplier_id: '',
   location_id: '',
   consumable: false,
-  vehicle_id: '' // New field to associate with a vehicle
+  vehicle_id: '',
+  invoice_number: ''
 };
 
 export const toolsStructure = {
@@ -244,6 +246,26 @@ export async function getPartsLowOnStock(threshold) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Error getting parts low on stock: ", error);
+    throw error;
+  }
+}
+
+// Add these functions after the existing CRUD operations
+
+export const addNewSupplier = (data) => createDocument('suppliers', data);
+export const getSupplier = (id) => readDocument('suppliers', id);
+export const updateSupplier = (id, data) => updateDocument('suppliers', id, data);
+export const deleteSupplier = (id) => deleteDocument('suppliers', id);
+export const getAllSuppliers = () => getAllDocuments('suppliers');
+
+// Add this function to get parts by supplier
+export async function getPartsBySupplier(supplierId) {
+  try {
+    const q = query(collectionsMap.parts, where("supplier_id", "==", supplierId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting parts by supplier: ", error);
     throw error;
   }
 }

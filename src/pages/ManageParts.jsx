@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles } from '../firebaseOperations';
+import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier } from '../firebaseOperations';
 
 const ManageParts = () => {
   const [parts, setParts] = useState([]);
@@ -15,15 +15,33 @@ const ManageParts = () => {
     supplier_id: '',
     location_id: '',
     consumable: false,
-    vehicle_id: ''
+    vehicle_id: '',
+    invoice_number: ''
   });
   const [editingPart, setEditingPart] = useState(null);
   const [vehicles, setVehicles] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showSupplierForm, setShowSupplierForm] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({
+    name: '',
+    contact_email: '',
+    contact_phone: '',
+    address: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: '',
+    notes: '',
+    website: ''
+  });
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [suppliersList, setSuppliersList] = useState([]);
 
   useEffect(() => {
     fetchParts();
     fetchVehicles();
+    fetchSuppliers();
   }, []);
 
   const fetchParts = async () => {
@@ -41,6 +59,16 @@ const ManageParts = () => {
       setVehicles(vehiclesData);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const suppliersData = await getAllSuppliers();
+      setSuppliers(suppliersData);
+      setSuppliersList(suppliersData);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
     }
   };
 
@@ -66,7 +94,8 @@ const ManageParts = () => {
         supplier_id: '',
         location_id: '',
         consumable: false,
-        vehicle_id: ''
+        vehicle_id: '',
+        invoice_number: ''
       });
       fetchParts();
     } catch (error) {
@@ -94,6 +123,48 @@ const ManageParts = () => {
     }
   };
 
+  const handleAddSupplier = async () => {
+    try {
+      await addNewSupplier(newSupplier);
+      setNewSupplier({
+        name: '',
+        contact_email: '',
+        contact_phone: '',
+        address: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: '',
+        notes: '',
+        website: ''
+      });
+      fetchSuppliers();
+      setShowSupplierForm(false);
+    } catch (error) {
+      console.error("Error adding supplier:", error);
+    }
+  };
+
+  const handleEditSupplier = async () => {
+    if (!editingSupplier) return;
+    try {
+      await updateSupplier(editingSupplier.id, editingSupplier);
+      setEditingSupplier(null);
+      fetchSuppliers();
+    } catch (error) {
+      console.error("Error updating supplier:", error);
+    }
+  };
+
+  const handleDeleteSupplier = async (id) => {
+    try {
+      await deleteSupplier(id);
+      fetchSuppliers();
+    } catch (error) {
+      console.error("Error deleting supplier:", error);
+    }
+  };
+
   const renderPartForm = (part, setPart, submitHandler, buttonText) => (
     <div className="grid grid-cols-2 gap-4">
       {[
@@ -104,8 +175,8 @@ const ManageParts = () => {
         { name: "cost", label: "Cost", type: "number" },
         { name: "stock_level", label: "Stock Level", type: "number" },
         { name: "reorder_threshold", label: "Reorder Threshold", type: "number" },
-        { name: "supplier_id", label: "Supplier ID", type: "text" },
         { name: "location_id", label: "Location ID", type: "text" },
+        { name: "invoice_number", label: "Invoice Number", type: "text" },
       ].map((field) => (
         <div key={field.name} className="flex flex-col">
           <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -151,12 +222,115 @@ const ManageParts = () => {
           ))}
         </select>
       </div>
+      <div className="flex flex-col">
+        <label htmlFor="supplier_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Supplier
+        </label>
+        <select
+          id="supplier_id"
+          name="supplier_id"
+          value={part.supplier_id}
+          onChange={(e) => handleInputChange(e, part, setPart)}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="">Select Supplier</option>
+          {suppliers.map(supplier => (
+            <option key={supplier.id} value={supplier.id}>
+              {supplier.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 
-  const toggleAddForm = () => {
-    setShowAddForm(!showAddForm);
-  };
+  const renderSupplierForm = (supplier, setSupplier, submitHandler, buttonText) => (
+    <div className="grid grid-cols-2 gap-4">
+      {[
+        { name: "name", label: "Name", type: "text" },
+        { name: "contact_email", label: "Contact Email", type: "email" },
+        { name: "contact_phone", label: "Contact Phone", type: "tel" },
+        { name: "address", label: "Address", type: "text" },
+        { name: "city", label: "City", type: "text" },
+        { name: "state", label: "State", type: "text" },
+        { name: "postal_code", label: "Postal Code", type: "text" },
+        { name: "country", label: "Country", type: "text" },
+        { name: "website", label: "Website", type: "url" },
+        { name: "notes", label: "Notes", type: "textarea" },
+      ].map((field) => (
+        <div key={field.name} className="flex flex-col">
+          <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {field.label}
+          </label>
+          {field.type === "textarea" ? (
+            <textarea
+              id={field.name}
+              name={field.name}
+              value={supplier[field.name]}
+              onChange={(e) => handleInputChange(e, supplier, setSupplier)}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          ) : (
+            <input
+              type={field.type}
+              id={field.name}
+              name={field.name}
+              value={supplier[field.name]}
+              onChange={(e) => handleInputChange(e, supplier, setSupplier)}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderSuppliersList = () => (
+    <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Suppliers</h2>
+      <table className="w-full">
+        <thead>
+          <tr className="bg-gray-200 dark:bg-gray-700">
+            <th className="p-2 text-left text-gray-800 dark:text-white">Name</th>
+            <th className="p-2 text-left text-gray-800 dark:text-white">Contact Email</th>
+            <th className="p-2 text-left text-gray-800 dark:text-white">Contact Phone</th>
+            <th className="p-2 text-left text-gray-800 dark:text-white">Website</th>
+            <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {suppliersList.map(supplier => (
+            <tr key={supplier.id} className="border-b border-gray-200 dark:border-gray-700">
+              <td className="p-2 text-gray-800 dark:text-white">{supplier.name}</td>
+              <td className="p-2 text-gray-800 dark:text-white">{supplier.contact_email}</td>
+              <td className="p-2 text-gray-800 dark:text-white">{supplier.contact_phone}</td>
+              <td className="p-2 text-gray-800 dark:text-white">
+                {supplier.website && (
+                  <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                    {supplier.website}
+                  </a>
+                )}
+              </td>
+              <td className="p-2">
+                <button
+                  onClick={() => setEditingSupplier(supplier)}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteSupplier(supplier.id)}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -164,10 +338,16 @@ const ManageParts = () => {
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Manage Parts</h1>
         <div>
           <button
-            onClick={toggleAddForm}
+            onClick={() => setShowAddForm(!showAddForm)}
             className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
           >
             {showAddForm ? 'Hide Add Form' : 'Add Part'}
+          </button>
+          <button
+            onClick={() => setShowSupplierForm(!showSupplierForm)}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+          >
+            {showSupplierForm ? 'Hide Supplier Form' : 'Manage Suppliers'}
           </button>
           <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
             Back to Parts
@@ -184,6 +364,19 @@ const ManageParts = () => {
             className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           >
             Add Part
+          </button>
+        </div>
+      )}
+
+      {showSupplierForm && (
+        <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Manage Suppliers</h2>
+          {renderSupplierForm(newSupplier, setNewSupplier, handleAddSupplier, "Add Supplier")}
+          <button
+            onClick={handleAddSupplier}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Add Supplier
           </button>
         </div>
       )}
@@ -239,6 +432,21 @@ const ManageParts = () => {
           {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
           <button
             onClick={handleEditPart}
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Save Changes
+          </button>
+        </div>
+      )}
+
+      {renderSuppliersList()}
+
+      {editingSupplier && (
+        <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Supplier</h2>
+          {renderSupplierForm(editingSupplier, setEditingSupplier, handleEditSupplier, "Save Changes")}
+          <button
+            onClick={handleEditSupplier}
             className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           >
             Save Changes
