@@ -211,7 +211,8 @@ export const partsStructure = {
   reorder_threshold: 0,
   supplier_id: '',
   location_id: '',
-  consumable: false
+  consumable: false,
+  vehicle_id: '' // New field to associate with a vehicle
 };
 
 export const toolsStructure = {

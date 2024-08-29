@@ -183,7 +183,7 @@ const ManageParts = () => {
         onChange={(e) => handleInputChange(e, part, setPart)}
         className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
       >
-        <option value="">Select Vehicle</option>
+        <option value="">Select Vehicle (Optional)</option>
         {vehicles.map(vehicle => (
           <option key={vehicle.id} value={vehicle.id}>
             {vehicle.make} {vehicle.model} ({vehicle.license_plate})

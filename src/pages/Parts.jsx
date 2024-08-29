@@ -11,6 +11,7 @@ const Parts = () => {
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
 
   useEffect(() => {
     fetchParts();
@@ -128,6 +129,7 @@ const Parts = () => {
                     <p><strong>Supplier ID:</strong> {part.supplier_id}</p>
                     <p><strong>Location ID:</strong> {part.location_id}</p>
                     <p><strong>Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
+                    <p><strong>Associated Vehicle:</strong> {part.vehicle_id ? `${vehicles.find(v => v.id === part.vehicle_id)?.make} ${vehicles.find(v => v.id === part.vehicle_id)?.model} (${vehicles.find(v => v.id === part.vehicle_id)?.license_plate})` : 'N/A'}</p>
                   </td>
                 </tr>
               )}
