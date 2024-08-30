@@ -13,7 +13,8 @@ const collectionsMap = {
   parts: collection(db, 'parts'),
   tools: collection(db, 'tools'),
   projects: collection(db, 'projects'),
-  service_records: collection(db, 'service_records')
+  service_records: collection(db, 'service_records'),
+  locations: collection(db, 'locations')
 };
 
 // Generic CRUD operations
@@ -347,4 +348,19 @@ export const initializeServiceRecordsCollection = async () => {
     });
     console.log('service_records collection initialized');
   }
+};
+
+// Add these functions for location management
+export const addNewLocation = (data) => createDocument('locations', data);
+export const getLocation = (id) => readDocument('locations', id);
+export const updateLocation = (id, data) => updateDocument('locations', id, data);
+export const deleteLocation = (id) => deleteDocument('locations', id);
+export const getAllLocations = () => getAllDocuments('locations');
+
+// Add this structure for locations
+export const locationStructure = {
+  location_id: 'auto-generated',
+  name: '',
+  type: '', // e.g., 'tote', 'box', 'drawer'
+  description: '',
 };

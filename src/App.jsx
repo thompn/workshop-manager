@@ -20,6 +20,8 @@ import AddServiceRecord from './pages/AddServiceRecord';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './components/UserProfile';
+import ManageLocations from './pages/ManageLocations';
+import LocationDetails from './pages/LocationDetails';
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -61,6 +63,8 @@ function AppContent() {
             <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
             <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
+            <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
+            <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
           </Routes>
         </main>
       </div>

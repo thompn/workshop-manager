@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles, getAllSuppliers } from '../firebaseOperations';
+import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles, getAllSuppliers, getAllLocations } from '../firebaseOperations';
 
 const Parts = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +14,7 @@ const Parts = () => {
   const [categories, setCategories] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesMap, setVehiclesMap] = useState({});
+  const [locations, setLocations] = useState([]);
 
   const formatCost = (value) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
@@ -24,10 +25,16 @@ const Parts = () => {
     return vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.license_plate})` : 'Unknown';
   };
 
+  const getLocationName = (locationId) => {
+    const location = locations.find(loc => loc.id === locationId);
+    return location ? location.name : 'Unknown';
+  };
+
   useEffect(() => {
     fetchParts();
     fetchVehicles();
     fetchSuppliers();
+    fetchLocations();
   }, [category]);
 
   const fetchParts = async () => {
@@ -72,6 +79,15 @@ const Parts = () => {
       setSuppliers(suppliersData);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const locationsData = await getAllLocations();
+      setLocations(locationsData);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
     }
   };
 
@@ -137,6 +153,7 @@ const Parts = () => {
             <th className="p-2 text-left">Stock Level</th>
             <th className="p-2 text-left">Supplier</th>
             <th className="p-2 text-left">Invoice Number</th>
+            <th className="p-2 text-left">Location</th>
           </tr>
         </thead>
         <tbody>
@@ -165,12 +182,21 @@ const Parts = () => {
                 </td>
                 <td className="p-2">{part.invoice_number || 'N/A'}</td>
                 <td className="p-2">
+                  {part.location_id ? (
+                    <Link to={`/locations/${part.location_id}`} className="text-blue-500 hover:text-blue-700">
+                      {getLocationName(part.location_id)}
+                    </Link>
+                  ) : (
+                    'N/A'
+                  )}
+                </td>
+                <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
                 </td>
               </tr>
               {expandedRow === part.id && (
                 <tr>
-                  <td colSpan="6" className="p-4 bg-gray-50 dark:bg-gray-900">
+                  <td colSpan="7" className="p-4 bg-gray-50 dark:bg-gray-900">
                     <h3 className="text-lg font-semibold mb-2">{part.description} Details</h3>
                     <p><strong>Part Number (Vendor):</strong> {part.part_number_vendor}</p>
                     <p><strong>Reorder Threshold:</strong> {part.reorder_threshold}</p>
