@@ -94,12 +94,15 @@ const AddServiceRecord = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const newRecordId = await addNewServiceRecord(serviceRecord);
-      console.log("New service record added with ID:", newRecordId);
+      const newServiceRecordId = await addNewServiceRecord({
+        ...serviceRecord,
+        vehicle_id: id,
+        service_date: new Date(serviceRecord.service_date).toISOString()
+      });
+      console.log("New service record added with ID: ", newServiceRecordId);
       navigate(`/vehicles/${id}`);
-    } catch (err) {
-      console.error("Error adding service record:", err);
-      setError(`Failed to add service record. Error: ${err.message}`);
+    } catch (error) {
+      console.error("Error adding new service record: ", error);
     }
   };
 

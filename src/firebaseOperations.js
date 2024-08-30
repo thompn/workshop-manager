@@ -327,11 +327,11 @@ export const getAllServiceTasks = async () => {
 
 export const getServiceRecordsByVehicle = async (vehicleId) => {
   try {
-    const q = query(collectionsMap.service_records, where("vehicle_id", "==", vehicleId));
+    const q = query(collection(db, 'service_records'), where('vehicle_id', '==', vehicleId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error getting service records by vehicle: ", error);
+    console.error("Error fetching service records for vehicle: ", error);
     throw error;
   }
 };

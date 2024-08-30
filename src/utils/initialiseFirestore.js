@@ -35,18 +35,7 @@ export const initializeFirestore = async () => {
         service_type: "Regular Maintenance",
         service_mileage: 12000,
         cost: 150.00,
-        brake_pads_checked: true,
-        oil_checked: true,
-        air_filter_checked: true,
-        chain_checked: false,
-        fuel_lines_checked: true,
-        bearings_checked: true,
-        tires_checked: true,
-        lights_checked: true,
-        battery_checked: true,
-        coolant_level_checked: true,
-        transmission_fluid_checked: true,
-        exhaust_system_checked: true
+        // ... other service details
       },
       current_location: {
         location_id: 1,
