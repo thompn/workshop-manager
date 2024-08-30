@@ -1,5 +1,5 @@
 # Use an official Node runtime as the base image
-FROM node:18-alpine
+FROM node:18-alpine as build
 
 # Set the working directory in the container
 WORKDIR /app
@@ -16,11 +16,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install a simple server to serve static content
-RUN npm install -g serve
+# Use nginx to serve the static files
+FROM nginx:alpine
+
+# Copy the built files from the previous stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 80
 
-# Command to run the application
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Command to run nginx
+CMD ["nginx", "-g", "daemon off;"]
