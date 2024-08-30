@@ -23,7 +23,8 @@
     "react-dom": "^18.3.1",
     "react-icons": "^4.12.0",
     "react-router-dom": "^6.26.1",
-    "tailwindcss": "^3.4.10"
+    "tailwindcss": "^3.4.10",
+    "react-scripts": "^5.0.1"  // Add this line
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
