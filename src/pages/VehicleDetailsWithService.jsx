@@ -115,7 +115,7 @@ const VehicleDetailsWithService = () => {
                   >
                     <td className="p-2">{new Date(record.service_date).toLocaleDateString()}</td>
                     <td className="p-2">{record.service_type}</td>
-                    <td className="p-2">{record.mileage} miles</td>
+                    <td className="p-2">{Math.round(record.mileage * 1.60934)} km</td>
                     <td className="p-2">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(record.cost)}</td>
                     <td className="p-2">
                       <button

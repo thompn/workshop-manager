@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier } from '../firebaseOperations';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const ManageParts = () => {
   const [parts, setParts] = useState([]);
@@ -315,15 +316,15 @@ const ManageParts = () => {
               <td className="p-2">
                 <button
                   onClick={() => setEditingSupplier(supplier)}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                  className="text-yellow-500 hover:text-yellow-700 mr-2"
                 >
-                  Edit
+                  <FaEdit className="text-xl" />
                 </button>
                 <button
                   onClick={() => handleDeleteSupplier(supplier.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                  className="text-red-500 hover:text-red-700"
                 >
-                  Delete
+                  <FaTrash className="text-xl" />
                 </button>
               </td>
             </tr>
@@ -414,15 +415,15 @@ const ManageParts = () => {
                     <td className="p-2">
                       <button
                         onClick={() => setEditingPart(part)}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        className="text-yellow-500 hover:text-yellow-700 mr-2"
                       >
-                        Edit
+                        <FaEdit className="text-xl" />
                       </button>
                       <button
                         onClick={() => handleDeletePart(part.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                        className="text-red-500 hover:text-red-700"
                       >
-                        Delete
+                        <FaTrash className="text-xl" />
                       </button>
                     </td>
                   </tr>
