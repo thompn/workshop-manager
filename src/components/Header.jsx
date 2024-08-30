@@ -34,6 +34,7 @@ const Header = () => {
                 <Link to="/vehicles" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Vehicles</Link>
                 <Link to="/parts" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Parts</Link>
                 <Link to="/tools" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Tools</Link>
+                <Link to="/profile" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Profile</Link>
                 <button onClick={handleLogout} className="ml-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
                   Logout
                 </button>

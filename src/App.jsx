@@ -19,6 +19,7 @@ import VehicleDetailsWithService from './pages/VehicleDetailsWithService';
 import AddServiceRecord from './pages/AddServiceRecord';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import UserProfile from './components/UserProfile';
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -59,6 +60,7 @@ function AppContent() {
             <Route path="/parts/manage" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
             <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
             <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
           </Routes>
         </main>
       </div>

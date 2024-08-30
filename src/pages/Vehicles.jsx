@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllVehicles } from '../firebaseOperations';
+import { getAllVehicles, getServiceRecordsByVehicle } from '../firebaseOperations';
 import { FaCar, FaMotorcycle, FaTruck } from 'react-icons/fa';
+import { format } from 'date-fns';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -9,19 +10,30 @@ const Vehicles = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchVehicles = async () => {
+    const fetchVehiclesAndServiceRecords = async () => {
       try {
         const vehiclesData = await getAllVehicles();
-        setVehicles(vehiclesData);
+        const vehiclesWithServiceRecords = await Promise.all(
+          vehiclesData.map(async (vehicle) => {
+            const serviceRecords = await getServiceRecordsByVehicle(vehicle.id);
+            const latestService = serviceRecords.length > 0
+              ? serviceRecords.reduce((latest, current) =>
+                  new Date(current.service_date) > new Date(latest.service_date) ? current : latest
+                )
+              : null;
+            return { ...vehicle, latestService };
+          })
+        );
+        setVehicles(vehiclesWithServiceRecords);
       } catch (err) {
-        console.error("Error fetching vehicles:", err);
+        console.error("Error fetching vehicles and service records:", err);
         setError("Failed to fetch vehicles. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVehicles();
+    fetchVehiclesAndServiceRecords();
   }, []);
 
   const getVehicleIcon = (type) => {
@@ -60,6 +72,11 @@ const Vehicles = () => {
             <p><strong>VIN:</strong> {vehicle.vin}</p>
             <p><strong>Mileage:</strong> {vehicle.current_mileage}</p>
             <p><strong>Status:</strong> {vehicle.status}</p>
+            <p><strong>Last Service:</strong> {
+              vehicle.latestService
+                ? format(new Date(vehicle.latestService.service_date), 'dd/MM/yyyy')
+                : 'No service record'
+            }</p>
           </Link>
         ))}
       </div>
