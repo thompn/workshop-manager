@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,8 +17,11 @@ const app = initializeApp(firebaseConfig);
 // Get Firestore instance
 const db = getFirestore(app);
 
-// Export the Firestore instance
-export { db };
+// Get Auth instance
+const auth = getAuth(app);
+
+// Export the Firestore and Auth instances
+export { db, auth };
 
 // Export a function to get the Firestore instance (useful for testing and mocking)
 export const getFirestoreInstance = () => db;
