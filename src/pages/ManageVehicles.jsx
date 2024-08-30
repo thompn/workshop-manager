@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const ManageVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -350,18 +351,18 @@ const ManageVehicles = () => {
                   <td className="p-2">
                     <button
                       onClick={(e) => handleEditClick(e, vehicle)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded mr-2"
+                      className="text-yellow-500 hover:text-yellow-700 mr-2"
                     >
-                      Edit
+                      <FaEdit className="text-xl" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteVehicle(vehicle.id);
                       }}
-                      className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
+                      className="text-red-500 hover:text-red-700"
                     >
-                      Delete
+                      <FaTrash className="text-xl" />
                     </button>
                   </td>
                 </tr>
@@ -374,10 +375,10 @@ const ManageVehicles = () => {
                             const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
                             setVehicles(updatedVehicles);
                           }, handleSaveEdit, "Save Changes")}
-                          <div className="mt-4">
+                          <div className="mt-4 flex justify-end space-x-2">
                             <button
                               onClick={() => handleSaveEdit(vehicle.id)}
-                              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mr-2"
+                              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
                             >
                               Save
                             </button>
