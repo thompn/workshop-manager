@@ -83,12 +83,19 @@ const ManageVehicles = () => {
     }
   };
 
-  const handleInputChange = (e, vehicleState, setVehicleState) => {
+  const handleInputChange = (e, vehicleId = null) => {
     const { name, value, type, checked } = e.target;
-    setVehicleState(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? Math.max(0, parseFloat(value) || 0) : value
-    }));
+    const newValue = type === 'checkbox' ? checked : value;
+
+    if (vehicleId) {
+      // Editing an existing vehicle
+      setVehicles(prevVehicles => prevVehicles.map(vehicle => 
+        vehicle.id === vehicleId ? { ...vehicle, [name]: newValue } : vehicle
+      ));
+    } else {
+      // Adding a new vehicle
+      setNewVehicle(prev => ({ ...prev, [name]: newValue }));
+    }
   };
 
   const handleAddVehicle = async () => {
@@ -214,7 +221,7 @@ const ManageVehicles = () => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
   };
 
-  const renderVehicleForm = (vehicle, setVehicle, submitHandler, buttonText) => (
+  const renderVehicleForm = (vehicle, isEditing = false) => (
     <div className="grid grid-cols-2 gap-4">
       {[
         { name: "license_plate", label: "License Plate", type: "text" },
@@ -235,46 +242,27 @@ const ManageVehicles = () => {
         { name: "insurance_provider", label: "Insurance Provider", type: "text" },
         { name: "insurance_policy_number", label: "Insurance Policy Number", type: "text" },
       ].map((field) => (
-        field.name === "cost" ? (
-          <div key={field.name} className="flex flex-col">
-            <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {field.label}
-            </label>
-            <input
-              type={field.type}
-              id={field.name}
-              name={field.name}
-              value={vehicle[field.name]}
-              onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-            />
-            <span className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {formatCost(vehicle[field.name])}
-            </span>
-          </div>
-        ) : (
-          <div key={field.name} className="flex flex-col">
-            <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {field.label}
-            </label>
-            <input
-              type={field.type}
-              id={field.name}
-              name={field.name}
-              value={vehicle[field.name]}
-              onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-            />
-          </div>
-        )
+        <div key={field.name} className="flex flex-col">
+          <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {field.label}
+          </label>
+          <input
+            type={field.type}
+            id={field.name}
+            name={field.name}
+            value={isEditing ? vehicle[field.name] : newVehicle[field.name]}
+            onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+        </div>
       ))}
       <div className="flex items-center">
         <input
           type="checkbox"
           id="insured"
           name="insured"
-          checked={vehicle.insured}
-          onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+          checked={isEditing ? vehicle.insured : newVehicle.insured}
+          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
           className="mr-2"
         />
         <label htmlFor="insured" className="text-gray-800 dark:text-white">Insured</label>
@@ -284,8 +272,8 @@ const ManageVehicles = () => {
           type="checkbox"
           id="gps_tracking_enabled"
           name="gps_tracking_enabled"
-          checked={vehicle.gps_tracking_enabled}
-          onChange={(e) => handleInputChange(e, vehicle, setVehicle)}
+          checked={isEditing ? vehicle.gps_tracking_enabled : newVehicle.gps_tracking_enabled}
+          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
           className="mr-2"
         />
         <label htmlFor="gps_tracking_enabled" className="text-gray-800 dark:text-white">GPS Tracking Enabled</label>
@@ -313,7 +301,7 @@ const ManageVehicles = () => {
       {showAddForm && (
         <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
           <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Vehicle</h2>
-          {renderVehicleForm(newVehicle, setNewVehicle, handleAddVehicle, "Add Vehicle")}
+          {renderVehicleForm(newVehicle, false)}
           <button
             onClick={handleAddVehicle}
             className="mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
@@ -367,14 +355,11 @@ const ManageVehicles = () => {
                   </td>
                 </tr>
                 {expandedVehicle === vehicle.id && (
-                  <tr>
+                  <tr key={`expanded-${vehicle.id}`}>
                     <td colSpan="6" className="p-4 bg-gray-100 dark:bg-gray-900">
                       {editingVehicle === vehicle.id ? (
                         <>
-                          {renderVehicleForm(vehicle, (updatedVehicle) => {
-                            const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
-                            setVehicles(updatedVehicles);
-                          }, handleSaveEdit, "Save Changes")}
+                          {renderVehicleForm(vehicle, true)}
                           <div className="mt-4 flex justify-end space-x-2">
                             <button
                               onClick={() => handleSaveEdit(vehicle.id)}
