@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier } from '../firebaseOperations';
+import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier, getAllLocations } from '../firebaseOperations';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const ManageParts = () => {
@@ -39,11 +39,13 @@ const ManageParts = () => {
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [suppliersList, setSuppliersList] = useState([]);
   const [showPartsTable, setShowPartsTable] = useState(true);
+  const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     fetchParts();
     fetchVehicles();
     fetchSuppliers();
+    fetchLocations();
   }, []);
 
   const fetchParts = async () => {
@@ -71,6 +73,15 @@ const ManageParts = () => {
       setSuppliersList(suppliersData);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const locationsData = await getAllLocations();
+      setLocations(locationsData);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
     }
   };
 
@@ -243,6 +254,25 @@ const ManageParts = () => {
           ))}
         </select>
       </div>
+      <div className="flex flex-col">
+        <label htmlFor="location_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Location
+        </label>
+        <select
+          id="location_id"
+          name="location_id"
+          value={part.location_id}
+          onChange={(e) => handleInputChange(e, part, setPart)}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        >
+          <option value="">Select Location</option>
+          {locations.map(location => (
+            <option key={location.id} value={location.id}>
+              {location.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 
@@ -356,6 +386,9 @@ const ManageParts = () => {
           </button>
           <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
             Back to Parts
+          </Link>
+          <Link to="/locations/manage" className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded mr-2">
+            Manage Locations
           </Link>
         </div>
       </div>

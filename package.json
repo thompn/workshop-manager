@@ -16,6 +16,7 @@
     "dotenv": "^16.4.5",
     "firebase": "^10.13.0",
     "postcss": "^8.4.41",
+    "qrcode.react": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^4.12.0",
