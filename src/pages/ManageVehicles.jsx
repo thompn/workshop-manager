@@ -283,7 +283,7 @@ const ManageVehicles = () => {
         { name: "make", label: "Make", type: "text" },
         { name: "model", label: "Model", type: "text" },
         { name: "year", label: "Year", type: "number" },
-        { name: "current_mileage", label: "Current Mileage", type: "number" },
+        { name: "current_mileage", label: "Current Mileage (km)", type: "number" },
         { name: "color", label: "Color", type: "text" },
         { name: "vehicle_type", label: "Vehicle Type", type: "text" },
         { name: "purchase_date", label: "Purchase Date", type: "date" },
@@ -486,7 +486,11 @@ const ManageVehicles = () => {
                               key !== 'id' && key !== 'latest_service' && (
                                 <div key={key} className="text-gray-800 dark:text-white">
                                   <strong>{formatFieldName(key)}:</strong>
-                                  <span className="ml-2">{value.toString()}</span>
+                                  <span className="ml-2">
+                                    {key === 'current_mileage' 
+                                      ? `${value} km`
+                                      : value.toString()}
+                                  </span>
                                 </div>
                               )
                             ))}
