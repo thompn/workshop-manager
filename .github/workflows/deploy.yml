@@ -43,5 +43,5 @@ jobs:
             -t workshop-management . &&
           /snap/bin/docker stop workshop-container || true &&
           /snap/bin/docker rm -f workshop-container || true &&
-          /snap/bin/docker run -d --name workshop-container -p 80:80 workshop-management
+          /snap/bin/docker run -d --name workshop-container -p 3000:80 workshop-management
         ' 2>&1
