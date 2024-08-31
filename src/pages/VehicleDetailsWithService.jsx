@@ -115,7 +115,7 @@ const VehicleDetailsWithService = () => {
                   >
                     <td className="p-2">{new Date(record.service_date).toLocaleDateString()}</td>
                     <td className="p-2">{record.service_type}</td>
-                    <td className="p-2">{Math.round(record.mileage * 1.60934)} km</td>
+                    <td className="p-2">{record.mileage}</td>
                     <td className="p-2">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(record.cost)}</td>
                     <td className="p-2">
                       <button
@@ -245,14 +245,16 @@ const EditServiceRecordForm = ({ record, onSave, onCancel }) => {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mileage</label>
-        <input
-          type="number"
-          name="mileage"
-          value={editedRecord.mileage}
-          onChange={handleInputChange}
-          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mileage</label>
+          <input
+            type="number"
+            name="mileage"
+            value={editedRecord.mileage}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cost</label>
