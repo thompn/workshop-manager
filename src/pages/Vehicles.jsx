@@ -53,26 +53,26 @@ const Vehicles = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Vehicles</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Vehicles</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {vehicles.map((vehicle) => (
           <Link
             key={vehicle.id}
             to={`/vehicles/${vehicle.id}`}
-            className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow"
+            className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow"
           >
             <div className="flex items-center mb-4">
               {getVehicleIcon(vehicle.vehicle_type)}
-              <h2 className="text-xl font-semibold ml-2">
+              <h2 className="text-lg sm:text-xl font-semibold ml-2">
                 {vehicle.make} {vehicle.model} ({vehicle.year})
               </h2>
             </div>
-            <p><strong>License Plate:</strong> {vehicle.license_plate}</p>
-            <p><strong>VIN:</strong> {vehicle.vin}</p>
-            <p><strong>Mileage:</strong> {vehicle.current_mileage}</p>
-            <p><strong>Status:</strong> {vehicle.status}</p>
-            <p><strong>Last Service:</strong> {
+            <p className="text-sm sm:text-base"><strong>License Plate:</strong> {vehicle.license_plate}</p>
+            <p className="text-sm sm:text-base"><strong>VIN:</strong> {vehicle.vin}</p>
+            <p className="text-sm sm:text-base"><strong>Mileage:</strong> {vehicle.current_mileage}</p>
+            <p className="text-sm sm:text-base"><strong>Status:</strong> {vehicle.status}</p>
+            <p className="text-sm sm:text-base"><strong>Last Service:</strong> {
               vehicle.latestService
                 ? format(new Date(vehicle.latestService.service_date), 'dd/MM/yyyy')
                 : 'No service record'
@@ -83,7 +83,7 @@ const Vehicles = () => {
       <div className="mt-8">
         <Link
           to="/vehicles/manage"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm sm:text-base"
         >
           Manage Vehicles
         </Link>
