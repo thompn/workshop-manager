@@ -25,7 +25,7 @@ const Header = () => {
       <nav className="container mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
           <div className="text-xl font-semibold text-gray-700 dark:text-white">
-            <Link to="/">Workshop Management System</Link>
+            <Link to="/">Workshop Management Systm</Link>
           </div>
           <div className="flex items-center">
             {currentUser ? (
