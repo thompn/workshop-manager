@@ -27,19 +27,28 @@ jobs:
       run: |
         echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
         ssh -v -o StrictHostKeyChecking=no -i private_key ${USER}@${HOST} << 'EOF'
-          sudo chmod 666 /run/docker.sock
-          cd /home/nick/workshop &&
-          git pull origin main &&
-          /snap/bin/docker build \
-            --build-arg VITE_FIREBASE_API_KEY='"'"'${FIREBASE_API_KEY}'"'"' \
-            --build-arg VITE_FIREBASE_AUTH_DOMAIN='"'"'${FIREBASE_AUTH_DOMAIN}'"'"' \
-            --build-arg VITE_FIREBASE_PROJECT_ID='"'"'${FIREBASE_PROJECT_ID}'"'"' \
-            --build-arg VITE_FIREBASE_STORAGE_BUCKET='"'"'${FIREBASE_STORAGE_BUCKET}'"'"' \
-            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID='"'"'${FIREBASE_MESSAGING_SENDER_ID}'"'"' \
-            --build-arg VITE_FIREBASE_APP_ID='"'"'${FIREBASE_APP_ID}'"'"' \
-            --build-arg VITE_FIREBASE_MEASUREMENT_ID='"'"'${FIREBASE_MEASUREMENT_ID}'"'"' \
-            -t workshop-management . &&
-          /snap/bin/docker stop workshop-container || true &&
-          /snap/bin/docker rm workshop-container || true &&
-          /snap/bin/docker run -d --name workshop-container -p 80:80 workshop-management
-        'EOF'
+          set -e
+          echo "Changing to project directory"
+          cd /home/nick/workshop
+          
+          echo "Updating repository"
+          git pull origin main
+          
+          echo "Stopping and removing existing container"
+          docker compose down || true
+          
+          echo "Building new Docker image"
+          docker compose build \
+            --build-arg VITE_FIREBASE_API_KEY="${FIREBASE_API_KEY}" \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN}" \
+            --build-arg VITE_FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}" \
+            --build-arg VITE_FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET}" \
+            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID}" \
+            --build-arg VITE_FIREBASE_APP_ID="${FIREBASE_APP_ID}" \
+            --build-arg VITE_FIREBASE_MEASUREMENT_ID="${FIREBASE_MEASUREMENT_ID}"
+          
+          echo "Starting new container"
+          docker compose up -d
+          
+          echo "Deployment completed successfully"
+        EOF
