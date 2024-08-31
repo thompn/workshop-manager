@@ -26,7 +26,7 @@ jobs:
         FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
       run: |
         echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-        ssh -o StrictHostKeyChecking=no -i private_key ${USER}@${HOST} '
+        ssh -v -o StrictHostKeyChecking=no -i private_key ${USER}@${HOST} << 'EOF'
           sudo chmod 666 /run/docker.sock
           cd /home/nick/workshop &&
           git pull origin main &&
@@ -42,4 +42,4 @@ jobs:
           /snap/bin/docker stop workshop-container || true &&
           /snap/bin/docker rm workshop-container || true &&
           /snap/bin/docker run -d --name workshop-container -p 80:80 workshop-management
-        '
+        'EOF'
