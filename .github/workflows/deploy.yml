@@ -31,6 +31,9 @@ jobs:
           echo "Changing to project directory"
           cd /home/nick/workshop
           
+          echo "Configuring Git safe directory"
+          git config --global --add safe.directory /home/nick/workshop
+          
           echo "Updating repository"
           git pull origin main
           
