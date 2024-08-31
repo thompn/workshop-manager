@@ -31,6 +31,7 @@ jobs:
           set -x
           sudo chmod 666 /run/docker.sock
           cd ${PROJECT_PATH} &&
+          echo ${PROJECT_PATH} &&
           git pull origin main &&
           /snap/bin/docker build \
             --build-arg VITE_FIREBASE_API_KEY='"'"'${FIREBASE_API_KEY}'"'"' \
