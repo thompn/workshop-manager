@@ -7,6 +7,6 @@ services:
       dockerfile: Dockerfile
     container_name: workshop-management-system
     ports:
-      - "80:3000"
+      - "3000:80"
     environment:
       - NODE_ENV=production
