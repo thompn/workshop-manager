@@ -5,7 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: workshop-management-system
     ports:
-      - "80:80"
+      - "80:3000"
     environment:
       - NODE_ENV=production
