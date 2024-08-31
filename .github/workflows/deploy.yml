@@ -31,7 +31,7 @@ jobs:
           set -x
           echo "Project path: \$PROJECT_PATH"
           sudo -n chmod 666 /run/docker.sock || echo "Failed to change Docker socket permissions"
-          cd \$PROJECT_PATH || exit 1
+          cd /home/nick/workshop || exit 1
           git pull origin main
           /snap/bin/docker build \
             --build-arg VITE_FIREBASE_API_KEY="\${FIREBASE_API_KEY}" \
@@ -44,5 +44,5 @@ jobs:
             -t workshop-management .
           /snap/bin/docker stop workshop-container || true
           /snap/bin/docker rm -f workshop-container || true
-          /snap/bin/docker run -d --name workshop-container -p 80:3000 workshop-managemen
+          /snap/bin/docker run -d --name workshop-container -p 80:3000 workshop-management
 EOF
