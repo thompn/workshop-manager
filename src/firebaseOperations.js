@@ -380,3 +380,25 @@ export const getVehicleChecklist = async (vehicleId, serviceType) => {
     throw error;
   }
 };
+
+export const updatePartCount = async (partId, countChange) => {
+  try {
+    const partRef = doc(collectionsMap.parts, partId);
+    const partSnap = await getDoc(partRef);
+    if (partSnap.exists()) {
+      const currentCount = partSnap.data().stock_level || 0;
+      const newCount = currentCount + countChange;
+      if (newCount <= 0) {
+        // Remove the part if the count reaches zero or below
+        await deleteDoc(partRef);
+      } else {
+        await updateDoc(partRef, { stock_level: newCount });
+      }
+    } else {
+      console.error(`Part with ID ${partId} does not exist.`);
+    }
+  } catch (error) {
+    console.error("Error updating part count:", error);
+    throw error;
+  }
+};

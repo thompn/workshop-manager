@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import VehicleServiceChecklist from '../components/VehicleServiceChecklist';
 import Select from 'react-select';
+import { useParts } from '../context/PartsContext';
 
 const AddServiceRecord = () => {
   const { id } = useParams();
@@ -30,6 +31,7 @@ const AddServiceRecord = () => {
 
   const [serviceTypes, setServiceTypes] = useState([]);
   const [vehicleChecklist, setVehicleChecklist] = useState([]);
+  const { setUpdateParts } = useParts();
 
   const fetchVehicleChecklist = async (vehicleId, serviceType) => {
     try {
@@ -92,7 +94,7 @@ const AddServiceRecord = () => {
     setServiceRecord({ ...serviceRecord, [name]: value });
   };
 
-  const handleAddPart = () => {
+  const handleAddPart = async () => {
     if (selectedPart) {
       const existingPartIndex = serviceRecord.parts_used.findIndex(part => part.id === selectedPart.value);
       let updatedPartsUsed;
@@ -118,6 +120,11 @@ const AddServiceRecord = () => {
         parts_used: updatedPartsUsed,
         cost: totalCost.toFixed(2)
       }));
+
+      // Decrement the part count in the inventory
+      await updatePartCount(selectedPart.value, -1);
+      setUpdateParts(true); // Trigger parts list refresh
+
       setSelectedPart(null);
     }
   };

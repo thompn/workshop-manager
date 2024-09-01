@@ -281,6 +281,10 @@ const ManageVehicles = () => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
   };
 
+  const calculateNextServiceMileage = (currentMileage, serviceInterval) => {
+    return currentMileage + serviceInterval;
+  };
+
   const renderVehicleForm = (vehicle, isEditing = false) => (
     <div className="grid grid-cols-2 gap-4">
       {[
@@ -444,6 +448,7 @@ const ManageVehicles = () => {
                 <th className="p-2 text-left text-gray-800 dark:text-white">Year</th>
                 <th className="p-2 text-left text-gray-800 dark:text-white">Status</th>
                 <th className="p-2 text-left text-gray-800 dark:text-white">Last Service</th>
+                <th className="p-2 text-left text-gray-800 dark:text-white">Next Service</th>
                 <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
               </tr>
             </thead>
@@ -463,6 +468,11 @@ const ManageVehicles = () => {
                       {vehicle.latest_service 
                         ? new Date(vehicle.latest_service.service_date).toLocaleDateString() 
                         : 'No service record'}
+                    </td>
+                    <td className="p-2 text-gray-800 dark:text-white">
+                      {vehicle.latest_service 
+                        ? `${calculateNextServiceMileage(vehicle.latest_service.service_mileage, vehicle.service_interval)} km` 
+                        : 'N/A'}
                     </td>
                     <td className="p-2">
                       <button
@@ -484,7 +494,7 @@ const ManageVehicles = () => {
                   </tr>
                   {expandedVehicle === vehicle.id && (
                     <tr key={`expanded-${vehicle.id}`}>
-                      <td colSpan="7" className="p-4 bg-gray-100 dark:bg-gray-900">
+                      <td colSpan="8" className="p-4 bg-gray-100 dark:bg-gray-900">
                         {editingVehicle === vehicle.id ? (
                           <>
                             {renderVehicleForm(vehicle, true)}

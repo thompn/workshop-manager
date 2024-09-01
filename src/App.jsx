@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { PartsProvider } from './context/PartsContext'; // Import the PartsProvider
 import Header from './components/Header';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -78,9 +79,11 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Router>
-          <AppContent />
-        </Router>
+        <PartsProvider> {/* Wrap the application with PartsProvider */}
+          <Router>
+            <AppContent />
+          </Router>
+        </PartsProvider>
       </ThemeProvider>
     </AuthProvider>
   );
