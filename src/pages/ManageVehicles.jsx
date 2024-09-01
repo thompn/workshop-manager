@@ -84,7 +84,8 @@ const ManageVehicles = () => {
       service_date: '',
       service_type: '',
       service_mileage: '',
-    }
+    },
+    serviceTypes: []
   });
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -132,17 +133,21 @@ const ManageVehicles = () => {
       // Editing an existing vehicle
       setVehicles(prevVehicles => prevVehicles.map(vehicle => 
         vehicle.id === vehicleId 
-          ? name.startsWith('latest_service.')
-            ? { ...vehicle, latest_service: { ...vehicle.latest_service, [name.split('.')[1]]: newValue } }
-            : { ...vehicle, [name]: newValue }
+          ? name === 'serviceTypes'
+            ? { ...vehicle, serviceTypes: value.split(',').map(type => type.trim()) }
+            : name.startsWith('latest_service.')
+              ? { ...vehicle, latest_service: { ...vehicle.latest_service, [name.split('.')[1]]: newValue } }
+              : { ...vehicle, [name]: newValue }
           : vehicle
       ));
     } else {
       // Adding a new vehicle
       setNewVehicle(prev => 
-        name.startsWith('latest_service.')
-          ? { ...prev, latest_service: { ...prev.latest_service, [name.split('.')[1]]: newValue } }
-          : { ...prev, [name]: newValue }
+        name === 'serviceTypes'
+          ? { ...prev, serviceTypes: value.split(',').map(type => type.trim()) }
+          : name.startsWith('latest_service.')
+            ? { ...prev, latest_service: { ...prev.latest_service, [name.split('.')[1]]: newValue } }
+            : { ...prev, [name]: newValue }
       );
     }
   };
@@ -203,7 +208,8 @@ const ManageVehicles = () => {
           service_date: '',
           service_type: '',
           service_mileage: '',
-        }
+        },
+        serviceTypes: []
       });
       fetchVehicles();
       setShowAddForm(false);
@@ -376,6 +382,20 @@ const ManageVehicles = () => {
           </div>
         </div>
       </div>
+      <div className="flex flex-col">
+        <label htmlFor="serviceTypes" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Service Types (comma-separated)
+        </label>
+        <input
+          type="text"
+          id="serviceTypes"
+          name="serviceTypes"
+          value={isEditing ? vehicle.serviceTypes.join(', ') : newVehicle.serviceTypes.join(', ')}
+          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          placeholder="e.g. Oil Change, Tire Rotation, Annual Service"
+        />
+      </div>
     </div>
   );
 
@@ -393,6 +413,9 @@ const ManageVehicles = () => {
             </button>
             <Link to="/vehicles" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
               Back to Vehicles
+            </Link>
+            <Link to="/manage-checklists" className="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+              Manage Checklists
             </Link>
           </div>
         </div>

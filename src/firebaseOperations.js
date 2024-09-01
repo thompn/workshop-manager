@@ -364,3 +364,19 @@ export const locationStructure = {
   type: '', // e.g., 'tote', 'box', 'drawer'
   description: '',
 };
+
+export const getVehicleChecklist = async (vehicleId, serviceType) => {
+  try {
+    const docRef = doc(db, 'vehicleChecklists', `${vehicleId}_${serviceType}`);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().tasks || [];
+    } else {
+      console.log("No checklist found for this vehicle and service type");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching vehicle checklist:", error);
+    throw error;
+  }
+};

@@ -22,6 +22,7 @@ import Register from './pages/Register';
 import UserProfile from './components/UserProfile';
 import ManageLocations from './pages/ManageLocations';
 import LocationDetails from './pages/LocationDetails';
+import ManageVehicleChecklists from './pages/ManageVehicleChecklists';
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -65,6 +66,7 @@ function AppContent() {
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
             <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
+            <Route path="/manage-checklists" element={<ManageVehicleChecklists />} />
           </Routes>
         </main>
       </div>
