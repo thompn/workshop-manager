@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord } from '../firebaseOperations';
-import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint } from 'react-icons/fa';
+import ServiceReport from '../components/ServiceReport';
 
 const VehicleDetailsWithService = () => {
   const { id } = useParams();
@@ -11,6 +12,7 @@ const VehicleDetailsWithService = () => {
   const [error, setError] = useState(null);
   const [expandedRecord, setExpandedRecord] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
+  const [selectedServiceRecord, setSelectedServiceRecord] = useState(null);
 
   useEffect(() => {
     const fetchVehicleAndServiceRecords = async () => {
@@ -69,6 +71,11 @@ const VehicleDetailsWithService = () => {
       console.error("Error updating service record:", error);
       alert('Failed to update service record. Please try again.');
     }
+  };
+
+  const handlePrintReport = (e, record) => {
+    e.stopPropagation();
+    setSelectedServiceRecord(record);
   };
 
   if (loading) return <div>Loading vehicle details and service records...</div>;
@@ -130,6 +137,12 @@ const VehicleDetailsWithService = () => {
                       >
                         <FaTrash />
                       </button>
+                      <button
+                        onClick={(e) => handlePrintReport(e, record)}
+                        className="text-blue-500 hover:text-blue-700 ml-2"
+                      >
+                        <FaPrint />
+                      </button>
                     </td>
                   </tr>
                   {expandedRecord === record.id && (
@@ -165,7 +178,7 @@ const VehicleDetailsWithService = () => {
                                 {record.parts_used && record.parts_used.length > 0 ? (
                                   <ul className="list-disc pl-5 space-y-1">
                                     {record.parts_used.map((part, index) => (
-                                      <li key={index}>{part}</li>
+                                      <li key={index}>{part.description || part.part_number_oem || `Part ID: ${part.id}` || 'Unknown Part'}</li>
                                     ))}
                                   </ul>
                                 ) : (
@@ -205,6 +218,25 @@ const VehicleDetailsWithService = () => {
           Back to Vehicles
         </Link>
       </div>
+
+      {selectedServiceRecord && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <ServiceReport vehicle={vehicle} serviceRecord={selectedServiceRecord} />
+              <div className="items-center px-4 py-3">
+                <button
+                  id="ok-btn"
+                  className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onClick={() => setSelectedServiceRecord(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

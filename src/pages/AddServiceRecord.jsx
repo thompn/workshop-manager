@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { addNewServiceRecord, getAllServiceTasks, getVehicle, getAllParts, getVehicleChecklist } from '../firebaseOperations';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import Select from 'react-select';
 import VehicleServiceChecklist from '../components/VehicleServiceChecklist';
+import Select from 'react-select';
 
 const AddServiceRecord = () => {
   const { id } = useParams();
@@ -18,7 +18,7 @@ const AddServiceRecord = () => {
   const [selectedPart, setSelectedPart] = useState(null);
   const [serviceRecord, setServiceRecord] = useState({
     vehicle_id: id,
-    service_date: '',
+    service_date: new Date().toISOString().split('T')[0],
     service_type: '',
     mileage: '',
     technician: '',
@@ -94,23 +94,46 @@ const AddServiceRecord = () => {
 
   const handleAddPart = () => {
     if (selectedPart) {
+      const existingPartIndex = serviceRecord.parts_used.findIndex(part => part.id === selectedPart.value);
+      let updatedPartsUsed;
+      if (existingPartIndex !== -1) {
+        updatedPartsUsed = serviceRecord.parts_used.map((part, index) => 
+          index === existingPartIndex ? { ...part, quantity: (part.quantity || 1) + 1 } : part
+        );
+      } else {
+        updatedPartsUsed = [
+          ...serviceRecord.parts_used,
+          {
+            id: selectedPart.value,
+            part_number_oem: selectedPart.part_number_oem,
+            description: selectedPart.description,
+            cost: selectedPart.cost || 0,
+            quantity: 1
+          }
+        ];
+      }
+      const totalCost = calculateTotalCost(updatedPartsUsed);
       setServiceRecord(prev => ({
         ...prev,
-        parts_used: [...prev.parts_used, {
-          id: selectedPart.value,
-          part_number_oem: selectedPart.part_number_oem,
-          description: selectedPart.description
-        }]
+        parts_used: updatedPartsUsed,
+        cost: totalCost.toFixed(2)
       }));
       setSelectedPart(null);
     }
   };
 
   const handleRemovePart = (index) => {
+    const updatedPartsUsed = serviceRecord.parts_used.filter((_, i) => i !== index);
+    const totalCost = calculateTotalCost(updatedPartsUsed);
     setServiceRecord(prev => ({
       ...prev,
-      parts_used: prev.parts_used.filter((_, i) => i !== index)
+      parts_used: updatedPartsUsed,
+      cost: totalCost.toFixed(2)
     }));
+  };
+
+  const calculateTotalCost = (parts) => {
+    return parts.reduce((total, part) => total + (part.cost || 0) * (part.quantity || 1), 0);
   };
 
   const handleServiceTypeChange = async (e) => {
@@ -132,7 +155,13 @@ const AddServiceRecord = () => {
         ...serviceRecord,
         vehicle_id: id,
         service_date: new Date(serviceRecord.service_date).toISOString(),
-        parts_used: serviceRecord.parts_used.map(part => part.id)
+        parts_used: serviceRecord.parts_used.map(part => ({
+          id: part.id,
+          part_number_oem: part.part_number_oem,
+          description: part.description,
+          cost: part.cost,
+          quantity: part.quantity
+        }))
       });
       console.log("New service record added with ID: ", newServiceRecordId);
       navigate(`/vehicles/${id}`);
@@ -175,9 +204,8 @@ const AddServiceRecord = () => {
             value={serviceRecord.service_type}
             onChange={handleServiceTypeChange}
             className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           >
-            <option value="">Select a service type</option>
+            <option value="">Select a service type (optional)</option>
             {serviceTypes.map((type, index) => (
               <option key={index} value={type}>{type}</option>
             ))}
@@ -189,7 +217,10 @@ const AddServiceRecord = () => {
             vehicleId={id}
             serviceType={serviceRecord.service_type}
             checklist={vehicleChecklist}
-            onTasksSelected={(tasks) => setServiceRecord(prev => ({ ...prev, completed_tasks: tasks }))}
+            onTasksSelected={(tasks) => setServiceRecord(prev => ({ 
+              ...prev, 
+              completed_tasks: tasks 
+            }))}
           />
         )}
 
@@ -248,6 +279,29 @@ const AddServiceRecord = () => {
             onChange={setSelectedPart}
             className="react-select-container"
             classNamePrefix="react-select"
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                backgroundColor: 'white',
+                borderColor: '#e2e8f0',
+                '&:hover': {
+                  borderColor: '#cbd5e0',
+                },
+              }),
+              menu: (provided) => ({
+                ...provided,
+                backgroundColor: 'white',
+              }),
+              option: (provided, state) => ({
+                ...provided,
+                backgroundColor: state.isSelected ? '#3b82f6' : 'white',
+                color: state.isSelected ? 'white' : 'black',
+                '&:hover': {
+                  backgroundColor: '#bfdbfe',
+                  color: 'black',
+                },
+              }),
+            }}
           />
           <button
             type="button"
@@ -256,14 +310,14 @@ const AddServiceRecord = () => {
           >
             Add Part
           </button>
-          <ul className="mt-2">
+          <ul className="mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md divide-y divide-gray-200 dark:divide-gray-600">
             {serviceRecord.parts_used.map((part, index) => (
-              <li key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-2 rounded mb-1">
+              <li key={index} className="flex items-center justify-between p-2">
                 <span className="text-gray-800 dark:text-white">{`${part.part_number_oem} - ${part.description}`}</span>
                 <button
                   type="button"
                   onClick={() => handleRemovePart(index)}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Remove
                 </button>
