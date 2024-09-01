@@ -51,7 +51,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
   };
 
   const docNumber = serviceRecord.id || Date.now().toString();
-  const totalCost = serviceRecord.parts_used.reduce((total, part) => total + parseFloat(part.cost), 0) + parseFloat(serviceRecord.cost);
+  const totalCost = serviceRecord.parts_used.reduce((total, part) => total + (parseFloat(part.cost) * part.quantity), 0);
 
   return (
     <div>
@@ -59,7 +59,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
         <div className="bg-white text-black p-8 max-w-4xl mx-auto border border-gray-300 shadow-lg">
           <div className="mb-8 text-right">
             <h1 className="text-4xl font-bold">{userProfile?.companyName || 'Company Name Not Set'}</h1>
-            <h2 className="text-2xl font-semibold">SERVICE REPORT</h2>
+            <h2 className="text-2xl font-semibold">Van Harten</h2>
           </div>
 
           <div className="mb-6 text-right">
@@ -84,6 +84,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
           <table className="w-full mb-6 text-left">
             <thead>
               <tr className="bg-gray-100">
+                <th className="p-2 text-left">OEM Part Number</th>
                 <th className="p-2 text-left">Description of Goods / Services</th>
                 <th className="p-2 text-left">Qty.</th>
                 <th className="p-2 text-left">Unit Price</th>
@@ -91,14 +92,9 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="p-2">{serviceRecord.service_type}</td>
-                <td className="p-2">1</td>
-                <td className="p-2">{serviceRecord.cost}</td>
-                <td className="p-2">{serviceRecord.cost}</td>
-              </tr>
               {serviceRecord.parts_used && serviceRecord.parts_used.map((part, index) => (
                 <tr key={index}>
+                  <td className="p-2">{part.part_number_oem || 'N/A'}</td>
                   <td className="p-2">{part.description || part.part_number_oem || `Part ID: ${part.id}`}</td>
                   <td className="p-2">{part.quantity}</td>
                   <td className="p-2">{part.cost}</td>
@@ -108,7 +104,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
             </tbody>
             <tfoot>
               <tr className="font-bold">
-                <td colSpan="3" className="p-2">Total</td>
+                <td colSpan="4" className="p-2">Total</td>
                 <td className="p-2">{totalCost.toFixed(2)}</td>
               </tr>
             </tfoot>
