@@ -68,7 +68,6 @@ function AppContent() {
             <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
             <Route path="/manage-checklists" element={<ManageVehicleChecklists />} />
-            <Route path="/manage-parts" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
           </Routes>
         </main>
       </div>

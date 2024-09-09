@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { collection, addDoc, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 // Collection references
 const collectionsMap = {
@@ -397,6 +398,50 @@ export const updatePartCount = async (partId, countChange) => {
     }
   } catch (error) {
     console.error("Error updating part count:", error);
+    throw error;
+  }
+};
+
+const storage = getStorage();
+
+export const uploadInvoiceToStorage = (file, invoiceNumber, onProgress) => {
+  const storageRef = ref(storage, `invoices/${invoiceNumber}/${file.name}`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  return new Promise((resolve, reject) => {
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        onProgress(progress);
+      },
+      (error) => {
+        reject(error);
+      },
+      () => {
+        resolve(storageRef);
+      }
+    );
+  });
+};
+
+export const getPartsByInvoiceNumber = async (invoiceNumber) => {
+  try {
+    const q = query(collectionsMap.parts, where("invoice_number", "==", invoiceNumber));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting parts by invoice number: ", error);
+    throw error;
+  }
+};
+
+export const getPartsByVendor = async (vendorId) => {
+  try {
+    const q = query(collectionsMap.parts, where("supplier_id", "==", vendorId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting parts by vendor: ", error);
     throw error;
   }
 };

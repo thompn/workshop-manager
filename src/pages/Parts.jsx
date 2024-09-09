@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getAllParts, getPartsByCategory, getPartsLowOnStock, getAllVehicles, getAllSuppliers, getAllLocations } from '../firebaseOperations';
+import { 
+  getAllParts, 
+  getPartsByCategory, 
+  getPartsLowOnStock, 
+  getAllVehicles, 
+  getAllSuppliers, 
+  getAllLocations 
+} from '../firebaseOperations';
 
 const Parts = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +22,8 @@ const Parts = () => {
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesMap, setVehiclesMap] = useState({});
   const [locations, setLocations] = useState([]);
+  const [showInvoicePopup, setShowInvoicePopup] = useState(false);
+  const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState('');
 
   const formatCost = (value) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
@@ -31,80 +40,90 @@ const Parts = () => {
   };
 
   useEffect(() => {
-    fetchParts();
-    fetchVehicles();
-    fetchSuppliers();
-    fetchLocations();
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [partsData, vehiclesData, suppliersData, locationsData] = await Promise.all([
+          fetchParts(),
+          fetchVehicles(),
+          fetchSuppliers(),
+          fetchLocations()
+        ]);
+
+        setParts(partsData);
+        setVehiclesMap(vehiclesData.reduce((map, vehicle) => ({ ...map, [vehicle.id]: vehicle }), {}));
+        setSuppliers(suppliersData);
+        setLocations(locationsData);
+
+        const uniqueCategories = [...new Set(partsData.map(part => part.category))];
+        setCategories(['all', 'low_stock', ...uniqueCategories]);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [category]);
 
   const fetchParts = async () => {
-    setLoading(true);
     try {
-      let partsData;
-      if (category === 'all') {
-        partsData = await getAllParts();
-      } else if (category === 'low_stock') {
-        partsData = await getPartsLowOnStock(10); // Assuming 10 as the threshold
-      } else {
-        partsData = await getPartsByCategory(category);
-      }
-      setParts(partsData);
-      
-      // Extract unique categories
-      const uniqueCategories = [...new Set(partsData.map(part => part.category))];
-      setCategories(['all', 'low_stock', ...uniqueCategories]);
+      if (category === 'all') return await getAllParts();
+      if (category === 'low_stock') return await getPartsLowOnStock(10);
+      return await getPartsByCategory(category);
     } catch (error) {
       console.error("Error fetching parts:", error);
-    } finally {
-      setLoading(false);
+      return [];
     }
   };
 
   const fetchVehicles = async () => {
     try {
-      const vehiclesData = await getAllVehicles();
-      const vehiclesMapData = {};
-      vehiclesData.forEach(vehicle => {
-        vehiclesMapData[vehicle.id] = vehicle;
-      });
-      setVehiclesMap(vehiclesMapData);
+      return await getAllVehicles();
     } catch (error) {
       console.error("Error fetching vehicles:", error);
+      return [];
     }
   };
 
   const fetchSuppliers = async () => {
     try {
-      const suppliersData = await getAllSuppliers();
-      setSuppliers(suppliersData);
+      return await getAllSuppliers();
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+      return [];
     }
   };
 
   const fetchLocations = async () => {
     try {
-      const locationsData = await getAllLocations();
-      setLocations(locationsData);
+      return await getAllLocations();
     } catch (error) {
       console.error("Error fetching locations:", error);
+      return [];
     }
   };
 
   const itemsPerPage = 10;
-
   const filteredParts = parts.filter(part => 
     part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
     part.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentParts = filteredParts.slice(startIndex, endIndex);
+  const currentParts = filteredParts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleRowClick = (id) => {
     setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  const handleInvoiceClick = (invoiceUrl) => {
+    if (invoiceUrl) {
+      setSelectedInvoiceUrl(invoiceUrl);
+      setShowInvoicePopup(true);
+    }
   };
 
   if (loading) {
@@ -170,25 +189,34 @@ const Parts = () => {
                 <td className="p-2">
                   {(() => {
                     const supplier = suppliers.find(s => s.id === part.supplier_id);
-                    if (supplier) {
-                      return supplier.website ? (
+                    return supplier ? (
+                      supplier.website ? (
                         <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
                           {supplier.name}
                         </a>
-                      ) : supplier.name;
-                    }
-                    return 'N/A';
+                      ) : supplier.name
+                    ) : 'N/A';
                   })()}
                 </td>
-                <td className="p-2">{part.invoice_number || 'N/A'}</td>
+                <td className="p-2">
+                  {part.invoice_url ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInvoiceClick(part.invoice_url);
+                      }}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      {part.invoice_number || 'View Invoice'}
+                    </button>
+                  ) : 'N/A'}
+                </td>
                 <td className="p-2">
                   {part.location_id ? (
                     <Link to={`/locations/${part.location_id}`} className="text-blue-500 hover:text-blue-700">
                       {getLocationName(part.location_id)}
                     </Link>
-                  ) : (
-                    'N/A'
-                  )}
+                  ) : 'N/A'}
                 </td>
                 <td className="p-2">
                   {expandedRow === part.id ? <FaChevronUp /> : <FaChevronDown />}
@@ -201,8 +229,7 @@ const Parts = () => {
                     <p><strong>Part Number (Vendor):</strong> {part.part_number_vendor}</p>
                     <p><strong>Reorder Threshold:</strong> {part.reorder_threshold}</p>
                     <p><strong>Supplier:</strong> {
-                      (() => {
-                        const supplier = suppliers.find(s => s.id === part.supplier_id);
+                      (() => {const supplier = suppliers.find(s => s.id === part.supplier_id);
                         if (supplier) {
                           return supplier.website ? (
                             <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
@@ -224,7 +251,6 @@ const Parts = () => {
         </tbody>
       </table>
 
-      {/* Pagination controls */}
       <div className="mt-6 flex justify-between items-center">
         <button
           className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
@@ -242,6 +268,27 @@ const Parts = () => {
           Next
         </button>
       </div>
+
+      {showInvoicePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg w-3/4 h-3/4 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Invoice</h2>
+              <button
+                onClick={() => setShowInvoicePopup(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+            <iframe
+              src={selectedInvoiceUrl}
+              className="w-full h-full"
+              title="Invoice PDF"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

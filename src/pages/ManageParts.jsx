@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier, getAllLocations } from '../firebaseOperations';
+import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier, getAllLocations, uploadInvoiceToStorage } from '../firebaseOperations';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { getDownloadURL } from 'firebase/storage';
 
 const ManageParts = () => {
   const [parts, setParts] = useState([]);
@@ -40,6 +41,8 @@ const ManageParts = () => {
   const [suppliersList, setSuppliersList] = useState([]);
   const [showPartsTable, setShowPartsTable] = useState(true);
   const [locations, setLocations] = useState([]);
+  const [invoiceFile, setInvoiceFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     fetchParts();
@@ -95,6 +98,9 @@ const ManageParts = () => {
 
   const handleAddPart = async () => {
     try {
+      if (!newPart.part_number_oem || !newPart.description) {
+        throw new Error("Part number (OEM) and description are required.");
+      }
       await addNewPart(newPart);
       setNewPart({
         part_number_oem: '',
@@ -111,19 +117,25 @@ const ManageParts = () => {
         invoice_number: ''
       });
       fetchParts();
+      alert("Part added successfully!");
     } catch (error) {
       console.error("Error adding part:", error);
+      alert(`Failed to add part: ${error.message}`);
     }
   };
 
   const handleEditPart = async () => {
-    if (!editingPart) return;
     try {
+      if (!editingPart.part_number_oem || !editingPart.description) {
+        throw new Error("Part number (OEM) and description are required.");
+      }
       await updatePart(editingPart.id, editingPart);
       setEditingPart(null);
       fetchParts();
+      alert("Part updated successfully!");
     } catch (error) {
       console.error("Error updating part:", error);
+      alert(`Failed to update part: ${error.message}`);
     }
   };
 
@@ -175,6 +187,44 @@ const ManageParts = () => {
       fetchSuppliers();
     } catch (error) {
       console.error("Error deleting supplier:", error);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setInvoiceFile(file);
+    } else {
+      alert('Please select a PDF file');
+    }
+  };
+
+  const uploadInvoice = async () => {
+    if (!invoiceFile || !editingPart.invoice_number) {
+      alert('Please select an invoice file to upload and ensure the invoice number is set');
+      return;
+    }
+
+    try {
+      const invoiceRef = await uploadInvoiceToStorage(invoiceFile, editingPart.invoice_number, (progress) => {
+        setUploadProgress(progress);
+      });
+      const invoiceUrl = await getDownloadURL(invoiceRef);
+      
+      // Update the part with the invoice URL and invoice number
+      await updatePart(editingPart.id, { 
+        ...editingPart, 
+        invoice_url: invoiceUrl,
+        invoice_number: editingPart.invoice_number
+      });
+      
+      alert('Invoice uploaded successfully');
+      setInvoiceFile(null);
+      setUploadProgress(0);
+      fetchParts();
+    } catch (error) {
+      console.error('Error uploading invoice:', error);
+      alert(`Failed to upload invoice: ${error.message}`);
     }
   };
 
@@ -272,6 +322,33 @@ const ManageParts = () => {
             </option>
           ))}
         </select>
+      </div>
+      <div className="col-span-2">
+        <label htmlFor="invoice_upload" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Upload Invoice (PDF)
+        </label>
+        <input
+          type="file"
+          id="invoice_upload"
+          accept=".pdf"
+          onChange={handleFileUpload}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        />
+        {invoiceFile && (
+          <button
+            onClick={uploadInvoice}
+            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Upload Invoice
+          </button>
+        )}
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="mt-2">
+            <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${uploadProgress}%` }}>
+              {uploadProgress.toFixed(0)}%
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
