@@ -186,3 +186,28 @@ input[type="date"]:valid::-webkit-datetime-edit-year-field {
 .react-select-container .react-select__option--is-focused {
   @apply bg-blue-100 dark:bg-blue-800;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #servicePrintContent,
+  #servicePrintContent * {
+    visibility: visible;
+  }
+  #servicePrintContent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+    margin: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+}
