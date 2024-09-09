@@ -1,14 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const UserProfile = () => {
-  const { currentUser, updateUserProfile } = useAuth();
-  const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
+  const { currentUser, updateUserProfile, getUserProfile } = useAuth();
+  const [profile, setProfile] = useState({
+    displayName: '',
+    companyName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: ''
+  });
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userProfile = await getUserProfile();
+        if (userProfile) {
+          setProfile({
+            displayName: userProfile.displayName || '',
+            companyName: userProfile.companyName || '',
+            address: userProfile.address || '',
+            city: userProfile.city || '',
+            postalCode: userProfile.postalCode || '',
+            country: userProfile.country || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    fetchUserProfile();
+  }, [getUserProfile]);
+
+  const handleChange = (e) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateUserProfile({ displayName });
+      await updateUserProfile(profile);
       alert('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -27,8 +59,74 @@ const UserProfile = () => {
           <input
             type="text"
             id="displayName"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            name="displayName"
+            value={profile.displayName}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Company Name
+          </label>
+          <input
+            type="text"
+            id="companyName"
+            name="companyName"
+            value={profile.companyName}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Address
+          </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={profile.address}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            City
+          </label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={profile.city}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Postal Code
+          </label>
+          <input
+            type="text"
+            id="postalCode"
+            name="postalCode"
+            value={profile.postalCode}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Country
+          </label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            value={profile.country}
+            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           />
         </div>

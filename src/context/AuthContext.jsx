@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -23,14 +24,22 @@ export function AuthProvider({ children }) {
 
   const updateUserProfile = async (profileData) => {
     if (!currentUser) throw new Error('No user logged in');
-    await updateProfile(currentUser, profileData);
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userDocRef, profileData, { merge: true });
     setCurrentUser({ ...currentUser, ...profileData });
+  };
+
+  const getUserProfile = async () => {
+    if (!currentUser) throw new Error('No user logged in');
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const docSnap = await getDoc(userDocRef);
+    return docSnap.exists() ? docSnap.data() : null;
   };
 
   const value = {
     currentUser,
     updateUserProfile,
-    // ... other auth methods
+    getUserProfile,
   };
 
   return (

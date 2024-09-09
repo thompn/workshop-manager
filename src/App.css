@@ -150,3 +150,39 @@ input[type="date"]:valid::-webkit-datetime-edit-year-field {
     font-size: 18px;
   }
 }
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #cccccc;
+  --highlight-color: #e6f7ff;
+  --primary-color: #1890ff;
+}
+
+.dark {
+  --bg-color: #1f2937;
+  --text-color: #f3f4f6;
+  --border-color: #4b5563;
+  --highlight-color: #374151;
+  --primary-color: #3b82f6;
+}
+
+.react-select-container .react-select__control {
+  @apply w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.react-select-container .react-select__menu {
+  @apply bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600;
+}
+
+.react-select-container .react-select__option {
+  @apply text-gray-800 dark:text-white;
+}
+
+.react-select-container .react-select__option--is-selected {
+  @apply bg-blue-500 text-white;
+}
+
+.react-select-container .react-select__option--is-focused {
+  @apply bg-blue-100 dark:bg-blue-800;
+}
