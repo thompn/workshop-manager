@@ -21,33 +21,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
   }, [currentUser]);
 
   const printReport = () => {
-    const printContent = document.getElementById('servicePrintContent');
-    const windowContent = '<!DOCTYPE html><html><head><title>Print</title>';
-    const styles = `
-      <style>
-        @page { size: A4; margin: 0; }
-        body { margin: 0; }
-        #servicePrintContent {
-          width: 210mm;
-          height: 297mm;
-          padding: 20mm;
-          box-sizing: border-box;
-        }
-        @media print {
-          body { -webkit-print-color-adjust: exact; }
-          #servicePrintContent { page-break-after: always; }
-        }
-      </style>`;
-    const documentContent = windowContent + styles + '</head><body>' + printContent.innerHTML + '</body></html>';
-    const printWindow = window.open('', '', 'width=600,height=600');
-    printWindow.document.open();
-    printWindow.document.write(documentContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+    window.print();
   };
 
   const docNumber = serviceRecord.id || Date.now().toString();
