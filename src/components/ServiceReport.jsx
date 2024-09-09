@@ -59,7 +59,7 @@ const ServiceReport = ({ vehicle, serviceRecord }) => {
         <div className="bg-white text-black p-8 max-w-4xl mx-auto border border-gray-300 shadow-lg">
           <div className="mb-8 text-right">
             <h1 className="text-4xl font-bold">{userProfile?.companyName || 'Company Name Not Set'}</h1>
-            <h2 className="text-2xl font-semibold">Van Harten</h2>
+            <h2 className="text-2xl font-semibold">Service Report</h2>
           </div>
 
           <div className="mb-6 text-right">
