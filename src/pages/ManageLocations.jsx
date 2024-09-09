@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { addNewLocation, getAllLocations, updateLocation, deleteLocation } from '../firebaseOperations';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 
 const ManageLocations = () => {
@@ -11,7 +11,10 @@ const ManageLocations = () => {
     type: '',
     description: '',
   });
-  const [editingLocation, setEditingLocation] = useState(null);
+  const [editingLocationId, setEditingLocationId] = useState(null);
+  const [sortColumn, setSortColumn] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchLocations();
@@ -48,11 +51,12 @@ const ManageLocations = () => {
     }
   };
 
-  const handleEditLocation = async () => {
-    if (!editingLocation) return;
+  const handleEditLocation = async (id) => {
+    const locationToEdit = locations.find(loc => loc.id === id);
+    if (!locationToEdit) return;
     try {
-      await updateLocation(editingLocation.id, editingLocation);
-      setEditingLocation(null);
+      await updateLocation(id, locationToEdit);
+      setEditingLocationId(null);
       fetchLocations();
     } catch (error) {
       console.error("Error updating location:", error);
@@ -83,7 +87,7 @@ const ManageLocations = () => {
           id="name"
           name="name"
           value={location.name}
-          onChange={(e) => handleInputChange(e, location, setLocation)}
+          onChange={(e) => setLocation({ ...location, name: e.target.value })}
           className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
         />
       </div>
@@ -96,7 +100,7 @@ const ManageLocations = () => {
           id="type"
           name="type"
           value={location.type}
-          onChange={(e) => handleInputChange(e, location, setLocation)}
+          onChange={(e) => setLocation({ ...location, type: e.target.value })}
           className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
         />
       </div>
@@ -108,13 +112,34 @@ const ManageLocations = () => {
           id="description"
           name="description"
           value={location.description}
-          onChange={(e) => handleInputChange(e, location, setLocation)}
+          onChange={(e) => setLocation({ ...location, description: e.target.value })}
           className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
           rows="3"
         ></textarea>
       </div>
     </div>
   );
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredLocations = locations.filter(location =>
+    Object.values(location).some(value =>
+      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  const sortedAndFilteredLocations = filteredLocations.sort((a, b) => {
+    if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
+    if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="container mx-auto p-4">
@@ -136,59 +161,95 @@ const ManageLocations = () => {
         </button>
       </div>
 
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search locations..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+        />
+      </div>
+
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Locations</h2>
         <table className="w-full">
           <thead>
             <tr className="bg-gray-200 dark:bg-gray-700">
-              <th className="p-2 text-left text-gray-800 dark:text-white">Name</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Type</th>
-              <th className="p-2 text-left text-gray-800 dark:text-white">Description</th>
+              <th className="p-2 text-left text-gray-800 dark:text-white cursor-pointer" onClick={() => handleSort('name')}>
+                Name {sortColumn === 'name' && (sortDirection === 'asc' ? <FaChevronUp className="inline" /> : <FaChevronDown className="inline" />)}
+              </th>
+              <th className="p-2 text-left text-gray-800 dark:text-white cursor-pointer" onClick={() => handleSort('type')}>
+                Type {sortColumn === 'type' && (sortDirection === 'asc' ? <FaChevronUp className="inline" /> : <FaChevronDown className="inline" />)}
+              </th>
+              <th className="p-2 text-left text-gray-800 dark:text-white cursor-pointer" onClick={() => handleSort('description')}>
+                Description {sortColumn === 'description' && (sortDirection === 'asc' ? <FaChevronUp className="inline" /> : <FaChevronDown className="inline" />)}
+              </th>
               <th className="p-2 text-left text-gray-800 dark:text-white">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {locations.map(location => (
-              <tr key={location.id} className="border-b border-gray-200 dark:border-gray-700">
-                <td className="p-2 text-gray-800 dark:text-white">
-                  <Link to={`/locations/${location.id}`} className="text-blue-500 hover:text-blue-700">
-                    {location.name}
-                  </Link>
-                </td>
-                <td className="p-2 text-gray-800 dark:text-white">{location.type}</td>
-                <td className="p-2 text-gray-800 dark:text-white">{location.description}</td>
-                <td className="p-2">
-                  <button
-                    onClick={() => setEditingLocation(location)}
-                    className="text-yellow-500 hover:text-yellow-700 mr-2"
-                  >
-                    <FaEdit className="text-xl" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteLocation(location.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FaTrash className="text-xl" />
-                  </button>
-                </td>
-              </tr>
+            {sortedAndFilteredLocations.map(location => (
+              <React.Fragment key={location.id}>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <td className="p-2 text-gray-800 dark:text-white">
+                    <Link to={`/locations/${location.id}`} className="text-blue-500 hover:text-blue-700">
+                      {location.name}
+                    </Link>
+                  </td>
+                  <td className="p-2 text-gray-800 dark:text-white">{location.type}</td>
+                  <td className="p-2 text-gray-800 dark:text-white">{location.description}</td>
+                  <td className="p-2">
+                    <button
+                      onClick={() => setEditingLocationId(editingLocationId === location.id ? null : location.id)}
+                      className="text-yellow-500 hover:text-yellow-700 mr-2"
+                    >
+                      <FaEdit className="text-xl" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteLocation(location.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FaTrash className="text-xl" />
+                    </button>
+                  </td>
+                </tr>
+                {editingLocationId === location.id && (
+                  <tr className="bg-gray-100 dark:bg-gray-900 transition-all duration-300 ease-in-out">
+                    <td colSpan="4" className="p-4">
+                      {renderLocationForm(
+                        location,
+                        (updatedLocation) => {
+                          const updatedLocations = locations.map(loc => 
+                            loc.id === location.id ? { ...loc, ...updatedLocation } : loc
+                          );
+                          setLocations(updatedLocations);
+                        },
+                        () => handleEditLocation(location.id),
+                        "Save Changes"
+                      )}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          onClick={() => handleEditLocation(location.id)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mr-2"
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={() => setEditingLocationId(null)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
       </div>
-
-      {editingLocation && (
-        <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Location</h2>
-          {renderLocationForm(editingLocation, setEditingLocation, handleEditLocation, "Save Changes")}
-          <button
-            onClick={handleEditLocation}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Save Changes
-          </button>
-        </div>
-      )}
     </div>
   );
 };
