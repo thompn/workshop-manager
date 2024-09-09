@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   getAllParts, 
   getPartsByCategory, 
@@ -24,6 +24,19 @@ const Parts = () => {
   const [locations, setLocations] = useState([]);
   const [showInvoicePopup, setShowInvoicePopup] = useState(false);
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState('');
+  const [vehicleId, setVehicleId] = useState('');
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const vehicleIdParam = queryParams.get('vehicleId');
+    if (vehicleIdParam) {
+      setVehicleId(vehicleIdParam);
+      setSelectedVehicle(vehicleIdParam);
+    }
+  }, [location]);
 
   const formatCost = (value) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
@@ -51,6 +64,7 @@ const Parts = () => {
         ]);
 
         setParts(partsData);
+        setVehicles(vehiclesData);
         setVehiclesMap(vehiclesData.reduce((map, vehicle) => ({ ...map, [vehicle.id]: vehicle }), {}));
         setSuppliers(suppliersData);
         setLocations(locationsData);
@@ -66,7 +80,7 @@ const Parts = () => {
     };
 
     fetchData();
-  }, [category]);
+  }, [category, selectedVehicle]);
 
   const fetchParts = async () => {
     try {
@@ -108,8 +122,9 @@ const Parts = () => {
 
   const itemsPerPage = 10;
   const filteredParts = parts.filter(part => 
-    part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    part.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    part.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (!selectedVehicle || part.vehicle_id === selectedVehicle)
   );
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
@@ -158,6 +173,18 @@ const Parts = () => {
           {categories.map(cat => (
             <option key={cat} value={cat}>
               {cat === 'all' ? 'All Categories' : cat === 'low_stock' ? 'Low Stock' : cat}
+            </option>
+          ))}
+        </select>
+        <select
+          className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+          value={selectedVehicle}
+          onChange={(e) => setSelectedVehicle(e.target.value)}
+        >
+          <option value="">All Vehicles</option>
+          {vehicles.map(vehicle => (
+            <option key={vehicle.id} value={vehicle.id}>
+              {vehicle.make} {vehicle.model} ({vehicle.license_plate})
             </option>
           ))}
         </select>

@@ -96,6 +96,14 @@ const VehicleDetailsWithService = () => {
           <p><strong>Status:</strong> {vehicle.status}</p>
           <p><strong>Purchase Date:</strong> {vehicle.purchase_date}</p>
         </div>
+        <div className="mt-4">
+          <Link 
+            to={`/parts?vehicleId=${vehicle.id}`} 
+            className="text-blue-500 hover:text-blue-700"
+          >
+            View Parts for this Vehicle
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
