@@ -387,13 +387,11 @@ export const updatePartCount = async (partId, countChange) => {
     const partSnap = await getDoc(partRef);
     if (partSnap.exists()) {
       const currentCount = partSnap.data().stock_level || 0;
-      const newCount = currentCount + countChange;
-      if (newCount <= 0) {
-        // Remove the part if the count reaches zero or below
-        await deleteDoc(partRef);
-      } else {
-        await updateDoc(partRef, { stock_level: newCount });
-      }
+      const newCount = Math.max(currentCount + countChange, 0); // Ensure stock level doesn't go below 0
+      await updateDoc(partRef, { stock_level: newCount });
+      
+      // If the new count is 0, we don't delete the part, just update its stock level
+      console.log(`Updated stock level for part ${partId}: ${newCount}`);
     } else {
       console.error(`Part with ID ${partId} does not exist.`);
     }
