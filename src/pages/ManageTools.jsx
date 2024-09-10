@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllTools, getToolsByCategory, getAllLocations, addNewTool } from '../firebaseOperations';
+import { getAllTools, getToolsByCategory, getAllLocations, addNewTool, updateTool, deleteTool } from '../firebaseOperations';
 
 const ManageTools = () => {
   const [tools, setTools] = useState([
@@ -77,7 +77,6 @@ const ManageTools = () => {
         notes: ''
       });
       await fetchTools();
-      alert("Tool added successfully!");
     } catch (error) {
       console.error("Error adding tool:", error);
       alert(`Failed to add tool: ${error.message}`);
@@ -99,7 +98,6 @@ const ManageTools = () => {
     try {
       await deleteTool(id);
       await fetchTools();
-      alert("Tool deleted successfully!");
     } catch (error) {
       console.error("Error deleting tool:", error);
       alert(`Failed to delete tool: ${error.message}`);
