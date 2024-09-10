@@ -26,6 +26,7 @@ const ManageTools = () => {
   const [locations, setLocations] = useState([]);
   const [locationSearch, setLocationSearch] = useState('');
   const [filteredLocations, setFilteredLocations] = useState([]);
+  const [editingTool, setEditingTool] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
