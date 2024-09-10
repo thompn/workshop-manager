@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getLocation, getAllParts, updatePart } from '../firebaseOperations';
+import { getLocation, getAllParts, getAllTools, updatePart, updateTool } from '../firebaseOperations';
 import { FaPlus, FaMinus, FaPrint } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -10,10 +10,12 @@ const LocationDetails = () => {
   const [parts, setParts] = useState([]);
   const [availableParts, setAvailableParts] = useState([]);
   const [availablePartsSearchTerm, setAvailablePartsSearchTerm] = useState('');
+  const [tools, setTools] = useState([]);
 
   useEffect(() => {
     fetchLocationDetails();
     fetchParts();
+    fetchTools();
   }, [id]);
 
   const fetchLocationDetails = async () => {
@@ -34,6 +36,16 @@ const LocationDetails = () => {
       setAvailableParts(partsNotInLocation);
     } catch (error) {
       console.error("Error fetching parts:", error);
+    }
+  };
+
+  const fetchTools = async () => {
+    try {
+      const allTools = await getAllTools();
+      const toolsInLocation = allTools.filter(tool => tool.location_id === id);
+      setTools(toolsInLocation);
+    } catch (error) {
+      console.error("Error fetching tools:", error);
     }
   };
 
@@ -119,9 +131,10 @@ const LocationDetails = () => {
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Parts in this Location</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Items in this Location</h2>
+          <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-white">Parts</h3>
           {parts.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="space-y-2 mb-4">
               {parts.map(part => (
                 <li key={part.id} className="flex justify-between items-center">
                   <span className="text-gray-800 dark:text-white">{part.description} ({part.part_number_oem})</span>
@@ -135,7 +148,21 @@ const LocationDetails = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600 dark:text-gray-400">No parts in this location.</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">No parts in this location.</p>
+          )}
+          <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-white">Tools</h3>
+          {tools.length > 0 ? (
+            <ul className="space-y-2">
+              {tools.map(tool => (
+                <li key={tool.id} className="flex justify-between items-center">
+                  <span className="text-gray-800 dark:text-white">
+                    {tool.manufacturer} - {tool.name} ({tool.asset_tag})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600 dark:text-gray-400">No tools in this location.</p>
           )}
         </div>
       </div>

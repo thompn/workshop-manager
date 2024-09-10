@@ -124,6 +124,7 @@ const Tools = () => {
         <table className="min-w-full bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
           <thead className="bg-gray-200 dark:bg-gray-700">
             <tr>
+              <th className="py-2 px-4 text-left">Asset Tag</th>
               <th className="py-2 px-4 text-left">Name</th>
               <th className="py-2 px-4 text-left">Manufacturer</th>
               <th className="py-2 px-4 text-left">Type</th>
@@ -140,6 +141,7 @@ const Tools = () => {
                   className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => handleRowClick(tool.id)}
                 >
+                  <td className="py-2 px-4">{tool.asset_tag}</td>
                   <td className="py-2 px-4 flex items-center">
                     <span className="mr-2">{getToolIcon(tool.category)}</span>
                     {tool.name}
