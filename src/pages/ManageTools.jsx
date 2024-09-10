@@ -80,7 +80,6 @@ const ManageTools = () => {
         notes: ''
       });
       await fetchTools();
-      alert("Tool added successfully!");
     } catch (error) {
       console.error("Error adding tool:", error);
       alert(`Failed to add tool: ${error.message}`);
