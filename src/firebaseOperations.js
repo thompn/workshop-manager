@@ -222,12 +222,19 @@ export const partsStructure = {
 
 export const toolsStructure = {
   tool_id: 'auto-generated',
-  tool_name: '',
+  name: '',
+  manufacturer: '',
   type: '',
+  category: '',
   location_id: '',
-  location: '',
-  last_calibration_date: null,
-  next_calibration_due: null
+  size: '',
+  invoice_number: '',
+  cost: 0,
+  quantity: 0,
+  last_maintenance_date: null,
+  next_maintenance_due: null,
+  condition: '',
+  notes: ''
 };
 
 // Additional query functions
@@ -445,3 +452,22 @@ export const getPartsByVendor = async (vendorId) => {
     throw error;
   }
 };
+
+// Add these functions for tool management
+export const addNewTool = (data) => createDocument('tools', data);
+export const getTool = (id) => readDocument('tools', id);
+export const updateTool = (id, data) => updateDocument('tools', id, data);
+export const deleteTool = (id) => deleteDocument('tools', id);
+export const getAllTools = () => getAllDocuments('tools');
+
+// Add this function to get tools by category
+export async function getToolsByCategory(category) {
+  try {
+    const q = query(collectionsMap.tools, where("category", "==", category));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting tools by category: ", error);
+    throw error;
+  }
+}

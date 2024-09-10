@@ -1,26 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp, FaTools, FaWrench, FaCog, FaRuler, FaCar } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { getAllTools, getToolsByCategory, getAllLocations } from '../firebaseOperations';
 
 const Tools = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRow, setExpandedRow] = useState(null);
   const [category, setCategory] = useState('all');
+  const [tools, setTools] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(['all']);
 
-  // Mock data for tools
-  const toolsData = [
-    { id: 1, name: "Adjustable Wrench", category: "Hand Tools", brand: "Craftsman", model: "AW-10", quantity: 5, location: "Drawer 1", lastMaintenance: "2023-05-15", condition: "Good" },
-    { id: 2, name: "Cordless Drill", category: "Power Tools", brand: "DeWalt", model: "DCD777C2", quantity: 2, location: "Shelf 3", lastMaintenance: "2023-04-20", condition: "Excellent" },
-    { id: 3, name: "Digital Caliper", category: "Measurement", brand: "Mitutoyo", model: "500-196-30", quantity: 1, location: "Toolbox 2", lastMaintenance: "2023-06-01", condition: "Excellent" },
-    { id: 4, name: "Hydraulic Jack", category: "Automotive", brand: "Torin", model: "T83006", quantity: 1, location: "Floor", lastMaintenance: "2023-03-10", condition: "Fair" },
-    { id: 5, name: "Screwdriver Set", category: "Hand Tools", brand: "Klein Tools", model: "85078", quantity: 1, location: "Drawer 2", lastMaintenance: "2023-05-30", condition: "Good" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [toolsData, locationsData] = await Promise.all([
+          fetchTools(),
+          fetchLocations()
+        ]);
 
-  const filteredTools = toolsData.filter(tool =>
-    tool.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (category === 'all' || tool.category === category)
-  );
+        setTools(toolsData);
+        setLocations(locationsData);
+
+        const uniqueCategories = [...new Set(toolsData.map(tool => tool.category))];
+        setCategories(['all', ...uniqueCategories]);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [category]);
+
+  const fetchTools = async () => {
+    try {
+      if (category === 'all') return await getAllTools();
+      return await getToolsByCategory(category);
+    } catch (error) {
+      console.error("Error fetching tools:", error);
+      return [];
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      return await getAllLocations();
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      return [];
+    }
+  };
 
   const getToolIcon = (category) => {
     switch (category) {
@@ -36,8 +71,26 @@ const Tools = () => {
     setExpandedRow(expandedRow === id ? null : id);
   };
 
+  const getLocationName = (locationId) => {
+    const location = locations.find(loc => loc.id === locationId);
+    return location ? location.name : 'Unknown';
+  };
+
+  const filteredTools = tools.filter(tool =>
+    tool.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (category === 'all' || tool.category === category)
+  );
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+  const currentTools = filteredTools.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  if (loading) {
+    return <div className="text-center mt-8">Loading tools...</div>;
+  }
+
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Workshop Tools Inventory</h1>
         <Link to="/tools/manage" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
@@ -60,11 +113,11 @@ const Tools = () => {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="all">All Categories</option>
-          <option value="Hand Tools">Hand Tools</option>
-          <option value="Power Tools">Power Tools</option>
-          <option value="Measurement">Measurement</option>
-          <option value="Automotive">Automotive</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat}>
+              {cat === 'all' ? 'All Categories' : cat}
+            </option>
+          ))}
         </select>
       </div>
       <div className="overflow-x-auto">
@@ -72,14 +125,16 @@ const Tools = () => {
           <thead className="bg-gray-200 dark:bg-gray-700">
             <tr>
               <th className="py-2 px-4 text-left">Name</th>
+              <th className="py-2 px-4 text-left">Manufacturer</th>
+              <th className="py-2 px-4 text-left">Type</th>
               <th className="py-2 px-4 text-left">Category</th>
-              <th className="py-2 px-4 text-left">Brand</th>
+              <th className="py-2 px-4 text-left">Location</th>
               <th className="py-2 px-4 text-left">Quantity</th>
               <th className="py-2 px-4 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredTools.map((tool) => (
+            {currentTools.map((tool) => (
               <React.Fragment key={tool.id}>
                 <tr 
                   className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -89,8 +144,16 @@ const Tools = () => {
                     <span className="mr-2">{getToolIcon(tool.category)}</span>
                     {tool.name}
                   </td>
+                  <td className="py-2 px-4">{tool.manufacturer}</td>
+                  <td className="py-2 px-4">{tool.type}</td>
                   <td className="py-2 px-4">{tool.category}</td>
-                  <td className="py-2 px-4">{tool.brand}</td>
+                  <td className="py-2 px-4">
+                    {tool.location_id ? (
+                      <Link to={`/locations/${tool.location_id}`} className="text-blue-500 hover:text-blue-700">
+                        {getLocationName(tool.location_id)}
+                      </Link>
+                    ) : 'N/A'}
+                  </td>
                   <td className="py-2 px-4">{tool.quantity}</td>
                   <td className="py-2 px-4">
                     {expandedRow === tool.id ? <FaChevronUp /> : <FaChevronDown />}
@@ -98,13 +161,15 @@ const Tools = () => {
                 </tr>
                 {expandedRow === tool.id && (
                   <tr>
-                    <td colSpan="5" className="p-4 bg-gray-50 dark:bg-gray-900">
+                    <td colSpan="7" className="p-4 bg-gray-50 dark:bg-gray-900">
                       <h3 className="text-lg font-semibold mb-2">{tool.name} Details</h3>
-                      <p><strong>Model:</strong> {tool.model}</p>
-                      <p><strong>Location:</strong> {tool.location}</p>
-                      <p><strong>Last Maintenance:</strong> {tool.lastMaintenance}</p>
+                      <p><strong>Size:</strong> {tool.size || 'N/A'}</p>
+                      <p><strong>Invoice Number:</strong> {tool.invoice_number || 'N/A'}</p>
+                      <p><strong>Cost:</strong> {tool.cost ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
+                      <p><strong>Last Maintenance:</strong> {tool.last_maintenance_date ? new Date(tool.last_maintenance_date).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Next Maintenance Due:</strong> {tool.next_maintenance_due ? new Date(tool.next_maintenance_due).toLocaleDateString() : 'N/A'}</p>
                       <p><strong>Condition:</strong> {tool.condition}</p>
-                      {/* Add more details as needed */}
+                      <p><strong>Notes:</strong> {tool.notes || 'N/A'}</p>
                     </td>
                   </tr>
                 )}
@@ -112,6 +177,23 @@ const Tools = () => {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="mt-6 flex justify-between items-center">
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
       </div>
     </div>
   );
