@@ -61,7 +61,9 @@ const ManageTools = () => {
 
   const handleAddTool = async () => {
     try {
-      await addNewTool(newTool);
+      const newAssetTag = await generateAssetTag();
+      const toolWithAssetTag = { ...newTool, asset_tag: newAssetTag };
+      await addNewTool(toolWithAssetTag);
       setNewTool({
         name: '',
         manufacturer: '',
@@ -78,17 +80,25 @@ const ManageTools = () => {
         notes: ''
       });
       await fetchTools();
+      alert("Tool added successfully!");
     } catch (error) {
       console.error("Error adding tool:", error);
       alert(`Failed to add tool: ${error.message}`);
     }
   };
 
+  const generateAssetTag = async () => {
+    const toolsData = await getAllTools();
+    const existingAssetTags = toolsData.map(tool => parseInt(tool.asset_tag));
+    const maxAssetTag = Math.max(...existingAssetTags, 0);
+    return (maxAssetTag + 1).toString().padStart(6, '0');
+  };
+
   const handleEditTool = async (id, updatedTool) => {
     try {
       await updateTool(id, updatedTool);
       await fetchTools();
-      alert("Tool updated successfully!");
+      setEditingTool(null);
     } catch (error) {
       console.error("Error updating tool:", error);
       alert(`Failed to update tool: ${error.message}`);
@@ -128,44 +138,46 @@ const ManageTools = () => {
         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Tool</h2>
         <div className="grid grid-cols-2 gap-4">
           {Object.entries(newTool).map(([key, value]) => (
-            <div key={key} className="flex flex-col">
-              <label htmlFor={key} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-              </label>
-              {key === 'location_id' ? (
-                <div className="relative">
+            key !== 'asset_tag' && (
+              <div key={key} className="flex flex-col">
+                <label htmlFor={key} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </label>
+                {key === 'location_id' ? (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id={`${key}_search`}
+                      placeholder="Search locations..."
+                      value={locationSearch}
+                      onChange={handleLocationSearch}
+                      className="p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    />
+                    <select
+                      id={key}
+                      name={key}
+                      value={value}
+                      onChange={handleInputChange}
+                      className="mt-2 p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    >
+                      <option value="">Select Location</option>
+                      {filteredLocations.map(location => (
+                        <option key={location.id} value={location.id}>{location.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
                   <input
-                    type="text"
-                    id={`${key}_search`}
-                    placeholder="Search locations..."
-                    value={locationSearch}
-                    onChange={handleLocationSearch}
-                    className="p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                  />
-                  <select
+                    type={key.includes('date') ? 'date' : key === 'cost' || key === 'quantity' ? 'number' : 'text'}
                     id={key}
                     name={key}
                     value={value}
                     onChange={handleInputChange}
-                    className="mt-2 p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                  >
-                    <option value="">Select Location</option>
-                    {filteredLocations.map(location => (
-                      <option key={location.id} value={location.id}>{location.name}</option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <input
-                  type={key.includes('date') ? 'date' : key === 'cost' || key === 'quantity' ? 'number' : 'text'}
-                  id={key}
-                  name={key}
-                  value={value}
-                  onChange={handleInputChange}
-                  className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                />
-              )}
-            </div>
+                    className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  />
+                )}
+              </div>
+            )
           ))}
         </div>
         <button
@@ -182,6 +194,7 @@ const ManageTools = () => {
         <table className="w-full">
           <thead>
             <tr className="bg-gray-200 dark:bg-gray-700">
+              <th className="p-2 text-left">Asset Tag</th>
               <th className="p-2 text-left">Name</th>
               <th className="p-2 text-left">Category</th>
               <th className="p-2 text-left">Actions</th>
@@ -190,11 +203,12 @@ const ManageTools = () => {
           <tbody>
             {tools.map(tool => (
               <tr key={tool.id} className="border-b dark:border-gray-700">
+                <td className="p-2">{tool.asset_tag}</td>
                 <td className="p-2">{tool.name}</td>
                 <td className="p-2">{tool.category}</td>
                 <td className="p-2">
                   <button
-                    onClick={() => handleEditTool(tool.id, { ...tool, name: 'Edited ' + tool.name })}
+                    onClick={() => setEditingTool(tool)}
                     className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded mr-2"
                   >
                     Edit
@@ -211,6 +225,57 @@ const ManageTools = () => {
           </tbody>
         </table>
       </div>
+      {editingTool && (
+        <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Tool</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(editingTool).map(([key, value]) => (
+              key !== 'id' && key !== 'asset_tag' && (
+                <div key={key} className="flex flex-col">
+                  <label htmlFor={key} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </label>
+                  {key === 'location_id' ? (
+                    <select
+                      id={key}
+                      name={key}
+                      value={value}
+                      onChange={(e) => setEditingTool({...editingTool, [key]: e.target.value})}
+                      className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    >
+                      <option value="">Select Location</option>
+                      {locations.map(location => (
+                        <option key={location.id} value={location.id}>{location.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={key.includes('date') ? 'date' : key === 'cost' || key === 'quantity' ? 'number' : 'text'}
+                      id={key}
+                      name={key}
+                      value={value}
+                      onChange={(e) => setEditingTool({...editingTool, [key]: e.target.value})}
+                      className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                    />
+                  )}
+                </div>
+              )
+            ))}
+          </div>
+          <button
+            onClick={() => handleEditTool(editingTool.id, editingTool)}
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={() => setEditingTool(null)}
+            className="mt-4 ml-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 };

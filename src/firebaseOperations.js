@@ -234,7 +234,8 @@ export const toolsStructure = {
   last_maintenance_date: null,
   next_maintenance_due: null,
   condition: '',
-  notes: ''
+  notes: '',
+  asset_tag: ''
 };
 
 // Additional query functions
