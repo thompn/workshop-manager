@@ -24,6 +24,7 @@ import UserProfile from './components/UserProfile';
 import ManageLocations from './pages/ManageLocations';
 import LocationDetails from './pages/LocationDetails';
 import ManageVehicleChecklists from './pages/ManageVehicleChecklists';
+import EpicDetails from './pages/EpicDetails';
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -68,6 +69,7 @@ function AppContent() {
             <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
             <Route path="/manage-checklists" element={<ManageVehicleChecklists />} />
+            <Route path="/projects/:projectId/epics/:epicId" element={<EpicDetails />} />
           </Routes>
         </main>
       </div>

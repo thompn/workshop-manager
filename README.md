@@ -1,18 +1,46 @@
 # Workshop Management System
 
-This is a React-based web application for managing a workshop, including projects, vehicles, parts, tools inventory, and locations.
+This is a comprehensive React-based web application for managing a workshop, including projects, vehicles, parts, tools inventory, and service records.
 
 ## Features
 
-- Dashboard overview of workshop activities
-- Project management
-- Vehicle tracking and service records
-- Parts inventory with location tracking
-- Tools inventory
-- QR code generation for locations
-- Dark mode support
-- User authentication and profile management
-- Dockerized deployment
+1. Project Management
+   - Create, view, edit, and delete projects
+   - Manage epics and stories within projects
+   - Track project progress and status
+
+2. Vehicle Management
+   - Add, view, edit, and delete vehicles
+   - Track vehicle details including make, model, year, and mileage
+   - Manage service records for each vehicle
+   - Generate service reports
+
+3. Parts Inventory
+   - Add, view, edit, and delete parts
+   - Track part details, including stock levels and reorder thresholds
+   - Associate parts with vehicles and suppliers
+   - Manage suppliers and their information
+   - Upload and view part invoices
+
+4. Tools Inventory
+   - Add, view, edit, and delete tools
+   - Track tool details, including location and maintenance dates
+   - Categorize tools for easy management
+
+5. Service Management
+   - Create and manage service records for vehicles
+   - Use service checklists for standardized maintenance
+   - Track service costs and technician information
+
+6. Location Management
+   - Manage storage locations for parts and tools
+
+7. Search and Filter
+   - Search and filter functionality for parts, tools, and vehicles
+
+8. User Interface
+   - Responsive design with dark mode support
+   - Pagination for large data sets
 
 ## Getting Started
 
@@ -20,13 +48,13 @@ This is a React-based web application for managing a workshop, including project
 
 - Node.js (v14 or later)
 - npm (v6 or later)
-- Docker (for containerized deployment)
+- Firebase account and project
 
 ### Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/workshop-management.git
+   git clone https://github.com/thompn/workshop-management.git
    ```
 
 2. Navigate to the project directory:
@@ -39,7 +67,12 @@ This is a React-based web application for managing a workshop, including project
    npm install
    ```
 
-4. Create a `.env` file in the root directory and add your Firebase configuration:
+4. Set up Firebase:
+   - Create a new Firebase project at https://console.firebase.google.com/
+   - Enable Firestore database and Authentication (with email/password)
+   - In your Firebase project settings, find the configuration object
+
+5. Create a `.env` file in the root directory and add your Firebase configuration:
    ```
    VITE_FIREBASE_API_KEY=your_api_key
    VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
@@ -47,67 +80,46 @@ This is a React-based web application for managing a workshop, including project
    VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
-   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
    ```
 
-5. Start the development server:
+6. Start the development server:
    ```
    npm run dev
    ```
 
-6. Open your browser and visit `http://localhost:5173`
+7. Open your browser and visit `http://localhost:5173`
 
-### Docker Deployment
+## Usage
 
-To deploy the application using Docker:
+### Projects
+- Navigate to the Projects page to view all projects
+- Use the "Add Project" button to create a new project
+- Click on a project to view its details, including epics and stories
+- Manage epics and stories within each project
 
-1. Build the Docker image:
-   ```
-   docker build -t workshop-management .
-   ```
+### Vehicles
+- Go to the Vehicles page to see all registered vehicles
+- Use the "Manage Vehicles" button to add, edit, or delete vehicles
+- Click on a vehicle to view its details and service history
+- Add new service records or edit existing ones
 
-2. Run the Docker container:
-   ```
-   docker run -p 3000:3000 workshop-management
-   ```
+### Parts
+- Access the Parts page to view the parts inventory
+- Use filters and search to find specific parts
+- Click "Manage Parts" to add, edit, or delete parts
+- Manage suppliers and their information
+- Upload invoices for parts
 
-3. Access the application at `http://localhost:3000`
+### Tools
+- Visit the Tools page to see the tools inventory
+- Use categories and search to find specific tools
+- Click "Manage Tools" to add, edit, or delete tools
+- Track tool locations and maintenance schedules
 
-## Project Structure
-
-- `src/`
-  - `components/`: Reusable React components
-  - `context/`: React context for global state management
-  - `pages/`: Main page components
-  - `utils/`: Utility functions
-  - `App.jsx`: Main application component
-  - `main.jsx`: Entry point of the application
-  - `firebaseOperations.js`: Firebase CRUD operations
-  - `firebase.js`: Firebase configuration
-
-## Technologies Used
-
-- React
-- React Router
-- Tailwind CSS
-- Firebase (Firestore, Authentication)
-- Vite
-- date-fns
-- React Icons
-- QRCode.react
-- Docker
-
-## Key Features
-
-1. **Project Management**: Create, update, and track projects with detailed information.
-2. **Vehicle Management**: Manage vehicles, including service records and maintenance history.
-3. **Parts Inventory**: Keep track of parts, their locations, and stock levels.
-4. **Tools Inventory**: Manage workshop tools and their availability.
-5. **Location Management**: Create and manage storage locations with QR code generation.
-6. **Service Records**: Add and view service records for vehicles.
-7. **User Authentication**: Secure login and registration system.
-8. **Dark Mode**: Toggle between light and dark themes for better user experience.
-9. **Dockerized Deployment**: Easy deployment and scaling using Docker containers.
+### Service Management
+- Access service records through the Vehicle Details page
+- Use the service checklist when performing maintenance
+- Add detailed service information, including costs and technician notes
 
 ## Contributing
 

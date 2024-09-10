@@ -472,3 +472,177 @@ export async function getToolsByCategory(category) {
     throw error;
   }
 }
+
+// Project operations
+export const addProject = async (projectData) => {
+  try {
+    const docRef = await addDoc(collection(db, "projects"), projectData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding project: ", error);
+    throw error;
+  }
+};
+
+export const updateProject = async (projectId, projectData) => {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    await updateDoc(projectRef, projectData);
+  } catch (error) {
+    console.error("Error updating project: ", error);
+    throw error;
+  }
+};
+
+export const deleteProject = async (projectId) => {
+  try {
+    await deleteDoc(doc(db, "projects", projectId));
+  } catch (error) {
+    console.error("Error deleting project: ", error);
+    throw error;
+  }
+};
+
+export const getAllProjects = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects"));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting projects: ", error);
+    throw error;
+  }
+};
+
+// Task operations
+export const addTask = async (projectId, taskData) => {
+  try {
+    const docRef = await addDoc(collection(db, "projects", projectId, "tasks"), taskData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding task: ", error);
+    throw error;
+  }
+};
+
+export const updateTask = async (projectId, taskId, taskData) => {
+  try {
+    const taskRef = doc(db, "projects", projectId, "tasks", taskId);
+    await updateDoc(taskRef, taskData);
+  } catch (error) {
+    console.error("Error updating task: ", error);
+    throw error;
+  }
+};
+
+export const deleteTask = async (projectId, taskId) => {
+  try {
+    await deleteDoc(doc(db, "projects", projectId, "tasks", taskId));
+  } catch (error) {
+    console.error("Error deleting task: ", error);
+    throw error;
+  }
+};
+
+export const getProjectTasks = async (projectId) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects", projectId, "tasks"));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting project tasks: ", error);
+    throw error;
+  }
+};
+
+// Epic operations
+export const addEpic = async (projectId, epicData) => {
+  try {
+    const docRef = await addDoc(collection(db, "projects", projectId, "epics"), epicData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding epic: ", error);
+    throw error;
+  }
+};
+
+export const updateEpic = async (projectId, epicId, epicData) => {
+  try {
+    const epicRef = doc(db, "projects", projectId, "epics", epicId);
+    await updateDoc(epicRef, epicData);
+  } catch (error) {
+    console.error("Error updating epic: ", error);
+    throw error;
+  }
+};
+
+export const deleteEpic = async (projectId, epicId) => {
+  try {
+    await deleteDoc(doc(db, "projects", projectId, "epics", epicId));
+  } catch (error) {
+    console.error("Error deleting epic: ", error);
+    throw error;
+  }
+};
+
+export const getProjectEpics = async (projectId) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects", projectId, "epics"));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting project epics: ", error);
+    throw error;
+  }
+};
+
+// Story operations
+export const addStory = async (projectId, epicId, storyData) => {
+  try {
+    const docRef = await addDoc(collection(db, "projects", projectId, "epics", epicId, "stories"), storyData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding story: ", error);
+    throw error;
+  }
+};
+
+export const updateStory = async (projectId, epicId, storyId, storyData) => {
+  try {
+    const storyRef = doc(db, "projects", projectId, "epics", epicId, "stories", storyId);
+    await updateDoc(storyRef, storyData);
+  } catch (error) {
+    console.error("Error updating story: ", error);
+    throw error;
+  }
+};
+
+export const deleteStory = async (projectId, epicId, storyId) => {
+  try {
+    await deleteDoc(doc(db, "projects", projectId, "epics", epicId, "stories", storyId));
+  } catch (error) {
+    console.error("Error deleting story: ", error);
+    throw error;
+  }
+};
+
+export const getEpicStories = async (projectId, epicId) => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects", projectId, "epics", epicId, "stories"));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting epic stories: ", error);
+    throw error;
+  }
+};
+
+export const getEpicDetails = async (projectId, epicId) => {
+  try {
+    const epicDoc = await getDoc(doc(db, "projects", projectId, "epics", epicId));
+    if (epicDoc.exists()) {
+      return { id: epicDoc.id, ...epicDoc.data() };
+    } else {
+      throw new Error("Epic not found");
+    }
+  } catch (error) {
+    console.error("Error getting epic details: ", error);
+    throw error;
+  }
+};
