@@ -163,14 +163,14 @@ const Tools = () => {
                 </tr>
                 {expandedRow === tool.id && (
                   <tr>
-                    <td colSpan="7" className="p-4 bg-gray-50 dark:bg-gray-900">
+                    <td colSpan="8" className="p-4 bg-gray-50 dark:bg-gray-900">
                       <h3 className="text-lg font-semibold mb-2">{tool.name} Details</h3>
                       <p><strong>Size:</strong> {tool.size || 'N/A'}</p>
                       <p><strong>Invoice Number:</strong> {tool.invoice_number || 'N/A'}</p>
-                      <p><strong>Cost:</strong> {tool.cost ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
+                      <p><strong>Cost:</strong> {typeof tool.cost === 'number' ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
                       <p><strong>Last Maintenance:</strong> {tool.last_maintenance_date ? new Date(tool.last_maintenance_date).toLocaleDateString() : 'N/A'}</p>
                       <p><strong>Next Maintenance Due:</strong> {tool.next_maintenance_due ? new Date(tool.next_maintenance_due).toLocaleDateString() : 'N/A'}</p>
-                      <p><strong>Condition:</strong> {tool.condition}</p>
+                      <p><strong>Condition:</strong> {tool.condition || 'N/A'}</p>
                       <p><strong>Notes:</strong> {tool.notes || 'N/A'}</p>
                     </td>
                   </tr>
