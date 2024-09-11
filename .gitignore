@@ -49,3 +49,8 @@ node_modules
 # Misc
 .DS_Store
 Thumbs.db
+
+firebaseConfig.js
+src/upload_tools.js
+src/upload_parts.js
+tools.csv
