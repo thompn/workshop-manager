@@ -285,123 +285,65 @@ const ManageVehicles = () => {
     return currentMileage + serviceInterval;
   };
 
-  const renderVehicleForm = (vehicle, isEditing = false) => (
-    <div className="grid grid-cols-2 gap-4">
-      {[
-        { name: "license_plate", label: "License Plate", type: "text" },
-        { name: "vin", label: "VIN", type: "text" },
-        { name: "make", label: "Make", type: "text" },
-        { name: "model", label: "Model", type: "text" },
-        { name: "year", label: "Year", type: "number" },
-        { name: "current_mileage", label: "Current Mileage (km)", type: "number" },
-        { name: "color", label: "Color", type: "text" },
-        { name: "vehicle_type", label: "Vehicle Type", type: "text" },
-        { name: "purchase_date", label: "Purchase Date", type: "date" },
-        { name: "status", label: "Status", type: "text" },
-        { name: "engine_type", label: "Engine Type", type: "text" },
-        { name: "fuel_type", label: "Fuel Type", type: "text" },
-        { name: "transmission_type", label: "Transmission Type", type: "text" },
-        { name: "seating_capacity", label: "Seating Capacity", type: "number" },
-        { name: "cargo_volume", label: "Cargo Volume", type: "number" },
-        { name: "insurance_provider", label: "Insurance Provider", type: "text" },
-        { name: "insurance_policy_number", label: "Insurance Policy Number", type: "text" },
-      ].map((field) => (
-        <div key={field.name} className="flex flex-col">
-          <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            {field.label}
-          </label>
-          <input
-            type={field.type}
-            id={field.name}
-            name={field.name}
-            value={isEditing ? vehicle[field.name] : newVehicle[field.name]}
-            onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-          />
-        </div>
-      ))}
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="insured"
-          name="insured"
-          checked={isEditing ? vehicle.insured : newVehicle.insured}
-          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-          className="mr-2"
-        />
-        <label htmlFor="insured" className="text-gray-800 dark:text-white">Insured</label>
-      </div>
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="gps_tracking_enabled"
-          name="gps_tracking_enabled"
-          checked={isEditing ? vehicle.gps_tracking_enabled : newVehicle.gps_tracking_enabled}
-          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-          className="mr-2"
-        />
-        <label htmlFor="gps_tracking_enabled" className="text-gray-800 dark:text-white">GPS Tracking Enabled</label>
-      </div>
-      <div className="col-span-2">
-        <h3 className="text-lg font-semibold mb-2">Latest Service</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="flex flex-col">
-            <label htmlFor="latest_service.service_date" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Service Date
-            </label>
-            <input
-              type="date"
-              id="latest_service.service_date"
-              name="latest_service.service_date"
-              value={isEditing ? vehicle.latest_service.service_date : newVehicle.latest_service.service_date}
-              onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="latest_service.service_type" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Service Type
-            </label>
-            <input
-              type="text"
-              id="latest_service.service_type"
-              name="latest_service.service_type"
-              value={isEditing ? vehicle.latest_service.service_type : newVehicle.latest_service.service_type}
-              onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="latest_service.service_mileage" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Service Mileage
-            </label>
-            <input
-              type="number"
-              id="latest_service.service_mileage"
-              name="latest_service.service_mileage"
-              value={isEditing ? vehicle.latest_service.service_mileage : newVehicle.latest_service.service_mileage}
-              onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-            />
-          </div>
+  const renderVehicleForm = (vehicle, isEditing) => {
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {Object.entries(vehicle).map(([key, value]) => {
+          if (key === 'id' || key === 'latest_service') return null;
+          return (
+            <div key={key} className="flex flex-col">
+              <label htmlFor={key} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {formatFieldName(key)}
+              </label>
+              <input
+                type={key === 'purchase_date' ? 'date' : 'text'}
+                id={key}
+                name={key}
+                value={value || ''}
+                onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
+                className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              />
+            </div>
+          );
+        })}
+        <div className="col-span-2">
+          <h3 className="text-lg font-semibold mb-2">Latest Service</h3>
+          {vehicle.latest_service ? (
+            <>
+              <div className="flex flex-col">
+                <label htmlFor="latest_service.service_date" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Service Date
+                </label>
+                <input
+                  type="date"
+                  id="latest_service.service_date"
+                  name="latest_service.service_date"
+                  value={vehicle.latest_service.service_date || ''}
+                  onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
+                  className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="latest_service.service_type" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Service Type
+                </label>
+                <input
+                  type="text"
+                  id="latest_service.service_type"
+                  name="latest_service.service_type"
+                  value={vehicle.latest_service.service_type || ''}
+                  onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
+                  className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                />
+              </div>
+            </>
+          ) : (
+            <p>No service record available</p>
+          )}
         </div>
       </div>
-      <div className="flex flex-col">
-        <label htmlFor="serviceTypes" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Service Types (comma-separated)
-        </label>
-        <input
-          type="text"
-          id="serviceTypes"
-          name="serviceTypes"
-          value={isEditing ? vehicle.serviceTypes.join(', ') : newVehicle.serviceTypes.join(', ')}
-          onChange={(e) => handleInputChange(e, isEditing ? vehicle.id : null)}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-          placeholder="e.g. Oil Change, Tire Rotation, Annual Service"
-        />
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <ErrorBoundary>
