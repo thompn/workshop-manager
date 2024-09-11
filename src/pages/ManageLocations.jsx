@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { addNewLocation, getAllLocations, updateLocation, deleteLocation } from '../firebaseOperations';
-import { FaEdit, FaTrash, FaChevronUp, FaChevronDown } from 'react-icons/fa';
-import { QRCodeSVG } from 'qrcode.react';
+import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaPlus, FaMinus } from 'react-icons/fa';
 
 const ManageLocations = () => {
   const [locations, setLocations] = useState([]);
@@ -15,9 +14,14 @@ const ManageLocations = () => {
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const locationsPerPage = 10;
+  const [itemsInLocation, setItemsInLocation] = useState({});
 
   useEffect(() => {
     fetchLocations();
+    fetchItemsInLocations();
   }, []);
 
   const fetchLocations = async () => {
@@ -26,6 +30,45 @@ const ManageLocations = () => {
       setLocations(locationsData);
     } catch (error) {
       console.error("Error fetching locations:", error);
+    }
+  };
+
+  const fetchItemsInLocations = async () => {
+    try {
+      const partsData = await getAllParts();
+      const toolsData = await getAllTools();
+      
+      const itemsCount = {};
+
+      partsData.forEach(part => {
+        if (part.location_id) {
+          if (!itemsCount[part.location_id]) {
+            itemsCount[part.location_id] = {};
+          }
+          itemsCount[part.location_id][part.id] = {
+            name: part.name,
+            quantity: part.quantity,
+            asset_tag: part.part_number_oem
+          };
+        }
+      });
+
+      toolsData.forEach(tool => {
+        if (tool.location_id) {
+          if (!itemsCount[tool.location_id]) {
+            itemsCount[tool.location_id] = {};
+          }
+          itemsCount[tool.location_id][tool.id] = {
+            name: tool.name,
+            quantity: tool.quantity,
+            asset_tag: tool.asset_tag
+          };
+        }
+      });
+
+      setItemsInLocation(itemsCount);
+    } catch (error) {
+      console.error("Error fetching items in locations:", error);
     }
   };
 
@@ -141,26 +184,40 @@ const ManageLocations = () => {
     return 0;
   });
 
+  const indexOfLastLocation = currentPage * locationsPerPage;
+  const indexOfFirstLocation = indexOfLastLocation - locationsPerPage;
+  const currentLocations = sortedAndFilteredLocations.slice(indexOfFirstLocation, indexOfLastLocation);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Manage Locations</h1>
-        <Link to="/parts/manage" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-          Back to Manage Parts
-        </Link>
-      </div>
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Manage Locations</h1>
+      
+      {/* Add Location button */}
+      <button
+        onClick={() => setShowAddForm(!showAddForm)}
+        className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center"
+      >
+        {showAddForm ? <FaMinus className="mr-2" /> : <FaPlus className="mr-2" />}
+        {showAddForm ? 'Hide Add Form' : 'Add New Location'}
+      </button>
 
-      <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Location</h2>
-        {renderLocationForm(newLocation, setNewLocation, handleAddLocation, "Add Location")}
-        <button
-          onClick={handleAddLocation}
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Add Location
-        </button>
-      </div>
+      {/* Add Location form */}
+      {showAddForm && (
+        <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Location</h2>
+          {renderLocationForm(newLocation, setNewLocation, handleAddLocation, "Add Location")}
+          <button
+            onClick={handleAddLocation}
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Add Location
+          </button>
+        </div>
+      )}
 
+      {/* Search input */}
       <div className="mb-4">
         <input
           type="text"
@@ -171,8 +228,8 @@ const ManageLocations = () => {
         />
       </div>
 
+      {/* Locations table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Locations</h2>
         <table className="w-full">
           <thead>
             <tr className="bg-gray-200 dark:bg-gray-700">
@@ -189,13 +246,20 @@ const ManageLocations = () => {
             </tr>
           </thead>
           <tbody>
-            {sortedAndFilteredLocations.map(location => (
+            {currentLocations.map(location => (
               <React.Fragment key={location.id}>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <td className="p-2 text-gray-800 dark:text-white">
                     <Link to={`/locations/${location.id}`} className="text-blue-500 hover:text-blue-700">
                       {location.name}
                     </Link>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {itemsInLocation[location.id] && Object.entries(itemsInLocation[location.id]).map(([itemId, item]) => (
+                        <div key={itemId}>
+                          {item.quantity}x {item.name} ({item.asset_tag})
+                        </div>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-2 text-gray-800 dark:text-white">{location.type}</td>
                   <td className="p-2 text-gray-800 dark:text-white">{location.description}</td>
@@ -249,6 +313,21 @@ const ManageLocations = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-4 flex justify-center">
+        {Array.from({ length: Math.ceil(sortedAndFilteredLocations.length / locationsPerPage) }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => paginate(i + 1)}
+            className={`mx-1 px-3 py-1 rounded ${
+              currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
       </div>
     </div>
   );

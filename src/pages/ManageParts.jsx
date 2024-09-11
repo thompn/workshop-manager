@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllSuppliers, addNewSupplier, updateSupplier, deleteSupplier, getAllLocations, uploadInvoiceToStorage } from '../firebaseOperations';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 import { getDownloadURL } from 'firebase/storage';
 
 const ManageParts = () => {
@@ -43,6 +43,7 @@ const ManageParts = () => {
   const [locations, setLocations] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [expandedPart, setExpandedPart] = useState(null);
 
   useEffect(() => {
     fetchParts();
@@ -441,6 +442,11 @@ const ManageParts = () => {
     </div>
   );
 
+  const handleEditClick = (partId) => {
+    setEditingPart(parts.find(part => part.id === partId));
+    setExpandedPart(expandedPart === partId ? null : partId);
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -461,10 +467,10 @@ const ManageParts = () => {
           >
             {showSupplierForm ? 'Hide Supplier Form' : 'Manage Suppliers'}
           </button>
-          <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+          <Link to="/parts" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">
             Back to Parts
           </Link>
-          <Link to="/locations/manage" className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded mr-2">
+          <Link to="/locations/manage" className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">
             Manage Locations
           </Link>
         </div>
@@ -514,47 +520,56 @@ const ManageParts = () => {
               </thead>
               <tbody>
                 {parts.map(part => (
-                  <tr key={part.id} className="border-b border-gray-200 dark:border-gray-700">
-                    <td className="p-2 text-gray-800 dark:text-white">{part.part_number_oem}</td>
-                    <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
-                    <td className="p-2 text-gray-800 dark:text-white">{part.category}</td>
-                    <td className="p-2 text-gray-800 dark:text-white">{part.stock_level}</td>
-                    <td className="p-2 text-gray-800 dark:text-white">
-                      {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
-                    </td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => setEditingPart(part)}
-                        className="text-yellow-500 hover:text-yellow-700 mr-2"
-                      >
-                        <FaEdit className="text-xl" />
-                      </button>
-                      <button
-                        onClick={() => handleDeletePart(part.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <FaTrash className="text-xl" />
-                      </button>
-                    </td>
-                  </tr>
+                  <React.Fragment key={part.id}>
+                    <tr className="border-b dark:border-gray-700">
+                      <td className="p-2 text-gray-800 dark:text-white">{part.part_number_oem}</td>
+                      <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
+                      <td className="p-2 text-gray-800 dark:text-white">{part.category}</td>
+                      <td className="p-2 text-gray-800 dark:text-white">{part.stock_level}</td>
+                      <td className="p-2 text-gray-800 dark:text-white">
+                        {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
+                      </td>
+                      <td className="p-2">
+                        <button
+                          onClick={() => handleEditClick(part.id)}
+                          className="text-yellow-500 hover:text-yellow-700 mr-2"
+                        >
+                          <FaEdit className="text-xl" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePart(part.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FaTrash className="text-xl" />
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedPart === part.id && (
+                      <tr>
+                        <td colSpan="6">
+                          <div className={`bg-gray-100 dark:bg-gray-800 p-4 transition-all duration-300 ${expandedPart === part.id ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
+                            <button
+                              onClick={handleEditPart}
+                              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                            >
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => setExpandedPart(null)}
+                              className="mt-4 ml-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Edit part form */}
-          {editingPart && (
-            <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Edit Part</h2>
-              {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
-              <button
-                onClick={handleEditPart}
-                className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Save Changes
-              </button>
-            </div>
-          )}
         </>
       )}
 

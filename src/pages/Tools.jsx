@@ -12,6 +12,8 @@ const Tools = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(['all']);
+  const [manufacturer, setManufacturer] = useState('all');
+  const [manufacturers, setManufacturers] = useState(['all']);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,8 +27,14 @@ const Tools = () => {
         setTools(toolsData);
         setLocations(locationsData);
 
-        const uniqueCategories = [...new Set(toolsData.map(tool => tool.category))];
-        setCategories(['all', ...uniqueCategories]);
+        const uniqueCategories = ['all', ...new Set(toolsData.map(tool => tool.category))];
+        const uniqueManufacturers = ['all', ...new Set(toolsData.map(tool => tool.manufacturer))];
+        setCategories(uniqueCategories);
+        setManufacturers(uniqueManufacturers);
+
+        // Sort tools by asset_tag
+        const sortedTools = toolsData.sort((a, b) => a.asset_tag.localeCompare(b.asset_tag));
+        setTools(sortedTools);
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -36,12 +44,18 @@ const Tools = () => {
     };
 
     fetchData();
-  }, [category]);
+  }, [category, manufacturer]);
 
   const fetchTools = async () => {
     try {
-      if (category === 'all') return await getAllTools();
-      return await getToolsByCategory(category);
+      let toolsData = await getAllTools();
+      if (category !== 'all') {
+        toolsData = toolsData.filter(tool => tool.category === category);
+      }
+      if (manufacturer !== 'all') {
+        toolsData = toolsData.filter(tool => tool.manufacturer === manufacturer);
+      }
+      return toolsData;
     } catch (error) {
       console.error("Error fetching tools:", error);
       return [];
@@ -117,6 +131,15 @@ const Tools = () => {
             <option key={cat} value={cat}>
               {cat === 'all' ? 'All Categories' : cat}
             </option>
+          ))}
+        </select>
+        <select
+          value={manufacturer}
+          onChange={(e) => setManufacturer(e.target.value)}
+          className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+        >
+          {manufacturers.map((manu) => (
+            <option key={manu} value={manu}>{manu === 'all' ? 'All Manufacturers' : manu}</option>
           ))}
         </select>
       </div>
