@@ -1,0 +1,127 @@
+asset_tag,name,manufacturer,type,category,location,size,invoice_number,cost,quantity,last_maintenance_date,next_maintenance_date,condition,notes
+000001,Spanner 8,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,8,,,1,,,Good,Inherited from Dad
+000002,Spanner 9,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,9,,,1,,,Good,Inherited from Dad
+000003,Spanner 10,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,10,,,1,,,Good,Inherited from Dad
+000004,Spanner 14 Long,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,14,,,1,,,Good,Inherited from Dad
+000005,Spanner 14 Socket,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,14,,,1,,,Good,Inherited from Dad
+000006,Spanner 17 Long,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,17,,,1,,,Good,Inherited from Dad
+000007,Socket 18 3/8,Snap-on,Socket 3/8,Sockets,2nEXvCo0HdOKhz5EQyKM,18,,,1,,,Good,Inherited from Dad
+000008,Spanner 19 Long,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,19,,,1,,,Good,Inherited from Dad
+000009,Spanner 30,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,30,,,1,,,Good,Inherited from Dad
+000010,Spanner 32,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,32,,,1,,,Good,Inherited from Dad
+000011,Spanner 11,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,11,,,1,,,Good,Inherited from Dad
+000012,Spanner 12,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,12,,,1,,,Good,Inherited from Dad
+000013,Spanner 14,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,14,,,1,,,Good,Inherited from Dad
+000014,Spanner 15,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,15,,,1,,,Good,Inherited from Dad
+000015,Spanner 16,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,16,,,1,,,Good,Inherited from Dad
+000016,Spanner 17,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,17,,,1,,,Good,Inherited from Dad
+000017,Spanner 18,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,18,,,1,,,Good,Inherited from Dad
+000018,Spanner 18,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,18,,,1,,,Good,Inherited from Dad
+000019,Spanner 18,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,18,,,1,,,Good,Inherited from Dad
+000020,Spanner 19,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,19,,,1,,,Good,Inherited from Dad
+000021,Spanner 21,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,21,,,1,,,Good,Inherited from Dad
+000022,Spanner 22,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,22,,,1,,,Pitted,Inherited from Dad
+000023,Spanner 24,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,24,,,1,,,Good,Inherited from Dad
+000024,Spanner 27,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,27,,,1,,,Good,Inherited from Dad
+000025,Spanner 27,Snap-on,Spanner,Spanners,2nEXvCo0HdOKhz5EQyKM,27,,,1,,,Good,Inherited from Dad
+000026,Socket E4 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,4,,,1,,,Good,Inherited from Dad
+000027,Socket E5 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,5,,,1,,,Good,Inherited from Dad
+000028,Socket 6T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,6,,,1,,,Good,Inherited from Dad
+000029,Socket E6 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,6,,,1,,,Good,Inherited from Dad
+000030,Socket 6 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,6,,,1,,,Good,Inherited from Dad
+000031,Socket 7T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,7,,,1,,,Good,Inherited from Dad
+000032,Socket E7 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,7,,,1,,,Good,Inherited from Dad
+000033,Socket 7 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,7,,,1,,,Good,Inherited from Dad
+000034,Socket 8T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,8,,,1,,,Good,Inherited from Dad
+000035,Socket E8 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,8,,,1,,,Good,Inherited from Dad
+000036,Socket 9T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,9,,,1,,,Good,Inherited from Dad
+000037,Socket 9 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,9,,,1,,,Good,Inherited from Dad
+000038,Socket E10 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,10,,,1,,,Good,Inherited from Dad
+000039,Socket 10 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,10,,,1,,,Good,Inherited from Dad
+000040,Socket 11 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,11,,,1,,,Good,Inherited from Dad
+000041,Socket 11T Long 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,11,,,1,,,Good,Inherited from Dad
+000042,Socket 12 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,12,,,1,,,Good,Inherited from Dad
+000043,Socket E12 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,12,,,1,,,Good,Inherited from Dad
+000044,Socket 12T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,12,,,1,,,Good,Inherited from Dad
+000045,Socket 13 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,13,,,1,,,Good,Inherited from Dad
+000046,Socket 13T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,13,,,1,,,Good,Inherited from Dad
+000047,Socket 14 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,14,,,1,,,Good,Inherited from Dad
+000048,Socket E14 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,14,,,1,,,Good,Inherited from Dad
+000049,Socket 14T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,14,,,1,,,Good,Inherited from Dad
+000050,Socket 15 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,15,,,1,,,Good,Inherited from Dad
+000051,Socket 15T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,15,,,1,,,Good,Inherited from Dad
+000052,Socket 16 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,16,,,1,,,Good,Inherited from Dad
+000053,Socket 16T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,16,,,1,,,Good,Inherited from Dad
+000054,Socket E16 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,16,,,1,,,Good,Inherited from Dad
+000055,Socket 17 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,17,,,1,,,Good,Inherited from Dad
+000056,Socket 17T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,17,,,1,,,Good,Inherited from Dad
+000057,Socket 18 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,18,,,1,,,Good,Inherited from Dad
+000058,Socket 18T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,18,,,1,,,Good,Inherited from Dad
+000059,Socket 18T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,18,,,1,,,Good,Inherited from Dad
+000060,Socket 19 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,19,,,1,,,Good,Inherited from Dad
+000061,Socket 19T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,19,,,1,,,Good,Inherited from Dad
+000062,Socket 20 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,20,,,1,,,Good,Inherited from Dad
+000063,Socket E20 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,20,,,1,,,Good,Inherited from Dad
+000064,Socket 20T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,20,,,1,,,Good,Inherited from Dad
+000065,Socket 21 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,21,,,1,,,Good,Inherited from Dad
+000066,Socket 21 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,21,,,1,,,Good,Inherited from Dad
+000067,Socket 21T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,21,,,1,,,Good,Inherited from Dad
+000068,Socket 22 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,22,,,1,,,Good,Inherited from Dad
+000069,Socket 22T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,22,,,1,,,Good,Inherited from Dad
+000070,Socket 23 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,23,,,1,,,Good,Inherited from Dad
+000071,Socket 23T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,23,,,1,,,Good,Inherited from Dad
+000072,Socket 24 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,24,,,1,,,Good,Inherited from Dad
+000073,Socket 24T 3/8,Blue Point,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,24,,,1,,,Good,Inherited from Dad
+000074,Ratchet 3/8,Blue Point,Ratchet 3/8,Ratchets,avOSGaSlcV5HndWbeP7O,3/8,,,1,,,Good,Inherited from Dad
+000075,Ratchet 3/8,Snap-on,Ratchet 3/8,Ratchets,avOSGaSlcV5HndWbeP7O,3/8,,,2,,,Good,Inherited from Dad
+000076,Spanner 6,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ, 6,,,1,,,Good,
+000077,Spanner 8,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ, 8,,,1,,,Good,
+000078,Spanner 9,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ, 9,,,1,,,Good,
+000079,Spanner 10,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,10,,,1,,,Good,
+000080,Spanner 11,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,11,,,1,,,Good,
+000081,Spanner 12,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,12,,,1,,,Good,
+000082,Spanner 13,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,13,,,1,,,Good,
+000083,Spanner 14,Unknown,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,14,,,1,,,Good,
+000084,Spanner 17,Rothewald,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,17,,,1,,,Good,
+000085,Spanner 19,Dexter,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,19,,,1,,,Good,
+000086,Spanner 24,Dexter,Spanner,Spanners,Be1Dp7IIBnw8O5gfMHtJ,24,,,1,,,Good,
+000087,Measurement Caliper,Mamesmann,Caliper,Measurement,Be1Dp7IIBnw8O5gfMHtJ,,,,1,,,Good,
+000088,Feeler Gauges,Spurtar,Feeler Gauges,Measurement,Be1Dp7IIBnw8O5gfMHtJ,0.03-1mm,,,1,,,Good,
+000089,Punch,Stanley,Punch,Punch,Be1Dp7IIBnw8O5gfMHtJ,,,,1,,,Good,
+000090,Steel Ruler,Gamma,Steel Ruler,Measurement,,30cm,,,1,,,Good,
+000091,Ratchet 1/4,Draper,Ratchet 1/4,Ratchets,Be1Dp7IIBnw8O5gfMHtJ,1/4,,,1,,,Good,
+000092,Molegrips,Stanley,Molegrips,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000093,Plier,Stanley,Pliers,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000094,Steel Cutter,Gamma,Steel Cutter,Cutting,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000095,Bar Clamp,Silverline,Bar Clamp,Clamps,Q9BkGskpuzQuYgEg0r0I,,,,4,,,Good,
+000096,Box Joint Pliers,Yato,Box Joint Pliers,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000097,Box Joint Pliers,Rothewald,Box Joint Pliers,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000098,Pliers,Unior,Pliers,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000099,Circlip Pliers,Elliot Lucas,Pliers,Grips,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Rusted,
+000100,Ratchet 3/8,Stanley,Ratchet 3/8,Ratchets,Q9BkGskpuzQuYgEg0r0I,,,,1,,,Good,
+000101,Ratchet Spanner 8,AOK,Ratchet Spanner,Spanners,,8,,,1,,,Good,
+000102,Ratchet Spanner 10,AOK,Ratchet Spanner,Spanners,,10,,,1,,,Good,
+000103,Ratchet Spanner 11,AOK,Ratchet Spanner,Spanners,,11,,,1,,,Good,
+000104,Ratchet Spanner 12,AOK,Ratchet Spanner,Spanners,,12,,,1,,,Good,
+000105,Ratchet Spanner 13,AOK,Ratchet Spanner,Spanners,,13,,,1,,,Good,
+000106,Ratchet Spanner 14,AOK,Ratchet Spanner,Spanners,,14,,,1,,,Good,
+000107,Ratchet Spanner 17,AOK,Ratchet Spanner,Spanners,,17,,,1,,,Good,
+000108,Ratchet Spanner 19,AOK,Ratchet Spanner,Spanners,,19,,,1,,,Good,
+000109,Socket 8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,8,,,1,,,Good,Inherited from Dad
+000110,Socket 9 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,9,,,1,,,Good,Inherited from Dad
+000111,Socket E10 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,10,,,1,,,Good,Inherited from Dad
+000112,Socket 10 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,10,,,1,,,Good,Inherited from Dad
+000113,Socket 11 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,11,,,1,,,Good,Inherited from Dad
+000114,Socket 12 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,12,,,1,,,Good,Inherited from Dad
+000115,Socket 13 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,13,,,1,,,Good,Inherited from Dad
+000116,Socket E14 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,14,,,1,,,Good,Inherited from Dad
+000117,Socket 14 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,14,,,1,,,Good,Inherited from Dad
+000118,Socket 15 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,15,,,1,,,Good,Inherited from Dad
+000119,Socket E16 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,16,,,1,,,Good,Inherited from Dad
+000120,Socket 16 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,16,,,1,,,Good,Inherited from Dad
+000121,Socket 17 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,17,,,1,,,Good,Inherited from Dad
+000122,Socket E18 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,18,,,1,,,Good,Inherited from Dad
+000123,Socket 18,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,18,,,1,,,Good,Inherited from Dad
+000124,Socket 19 3/8,Snap-on,Socket 3/8,Sockets,avOSGaSlcV5HndWbeP7O,19,,,1,,,Good,Inherited from Dad
+000125,Pillar Drill PBD40,Bosch,Pillar Drill,Drills,,,,,1,,,,
+000126,Heat Gun,Bosch,Heat Gun,Heat,,,,,1,,,,
