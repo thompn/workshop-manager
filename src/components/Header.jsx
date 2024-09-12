@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { FaSun, FaMoon, FaUpload } from 'react-icons/fa';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
@@ -38,6 +38,10 @@ const Header = () => {
                 <button onClick={handleLogout} className="ml-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
                   Logout
                 </button>
+                <Link to="/admin/upload" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                  <FaUpload className="mr-2" />
+                  Admin Upload
+                </Link>
               </>
             ) : (
               <>

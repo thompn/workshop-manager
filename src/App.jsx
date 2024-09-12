@@ -25,6 +25,7 @@ import ManageLocations from './pages/ManageLocations';
 import LocationDetails from './pages/LocationDetails';
 import ManageVehicleChecklists from './pages/ManageVehicleChecklists';
 import EpicDetails from './pages/EpicDetails';
+import AdminUpload from './components/AdminUpload';
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -70,6 +71,7 @@ function AppContent() {
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
             <Route path="/manage-checklists" element={<ManageVehicleChecklists />} />
             <Route path="/projects/:projectId/epics/:epicId" element={<EpicDetails />} />
+            <Route path="/admin/upload" element={<PrivateRoute><AdminUpload /></PrivateRoute>} />
           </Routes>
         </main>
       </div>
