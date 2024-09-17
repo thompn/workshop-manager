@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addNewPart, getAllParts, updatePart, deletePart, getAllVehicles, getAllLocations, uploadInvoiceToStorage } from '../firebaseOperations';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { getAllParts, addNewPart, updatePart, deletePart, getAllVehicles, getAllLocations, uploadInvoiceToStorage, getPartsByCategory } from '../firebaseOperations';
 import { FaEdit, FaTrash, FaPlus, FaMinus, FaSearch } from 'react-icons/fa';
 import { getDownloadURL } from 'firebase/storage';
 import { naturalSort } from '../utils/naturalSort';
 
 const ManageParts = () => {
-  const [parts, setParts] = useState([]);
   const [newPart, setNewPart] = useState({
     part_number_oem: '',
     part_number_vendor: '',
@@ -33,9 +33,36 @@ const ManageParts = () => {
   const [category, setCategory] = useState('all');
   const [categories, setCategories] = useState(['all']);
   const itemsPerPage = 10;
+  const queryClient = useQueryClient();
+
+  const { data: parts, isLoading, error } = useQuery(
+    ['parts', category],
+    () => category === 'all' ? getAllParts() : getPartsByCategory(category),
+    {
+      staleTime: 300000, // 5 minutes
+      cacheTime: 3600000, // 1 hour
+    }
+  );
+
+  const addPartMutation = useMutation(addNewPart, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('parts');
+    },
+  });
+
+  const updatePartMutation = useMutation(updatePart, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('parts');
+    },
+  });
+
+  const deletePartMutation = useMutation(deletePart, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('parts');
+    },
+  });
 
   useEffect(() => {
-    fetchParts();
     fetchVehicles();
     fetchLocations();
   }, []);
@@ -48,15 +75,6 @@ const ManageParts = () => {
     };
     fetchCategories();
   }, []);
-
-  const fetchParts = async () => {
-    try {
-      const partsData = await getAllParts();
-      setParts(partsData);
-    } catch (error) {
-      console.error("Error fetching parts:", error);
-    }
-  };
 
   const fetchVehicles = async () => {
     try {
@@ -89,7 +107,7 @@ const ManageParts = () => {
       if (!newPart.part_number_oem || !newPart.description) {
         throw new Error("Part number (OEM) and description are required.");
       }
-      await addNewPart(newPart);
+      await addPartMutation.mutateAsync(newPart);
       setNewPart({
         part_number_oem: '',
         part_number_vendor: '',
@@ -104,7 +122,6 @@ const ManageParts = () => {
         vehicle_id: '',
         invoice_number: ''
       });
-      fetchParts();
       alert("Part added successfully!");
     } catch (error) {
       console.error("Error adding part:", error);
@@ -117,9 +134,8 @@ const ManageParts = () => {
       if (!editingPart.part_number_oem || !editingPart.description) {
         throw new Error("Part number (OEM) and description are required.");
       }
-      await updatePart(editingPart.id, editingPart);
+      await updatePartMutation.mutateAsync([editingPart.id, editingPart]);
       setEditingPart(null);
-      fetchParts();
       alert("Part updated successfully!");
     } catch (error) {
       console.error("Error updating part:", error);
@@ -129,8 +145,7 @@ const ManageParts = () => {
 
   const handleDeletePart = async (id) => {
     try {
-      await deletePart(id);
-      fetchParts();
+      await deletePartMutation.mutateAsync(id);
     } catch (error) {
       console.error("Error deleting part:", error);
     }
@@ -158,16 +173,15 @@ const ManageParts = () => {
       const invoiceUrl = await getDownloadURL(invoiceRef);
       
       // Update the part with the invoice URL and invoice number
-      await updatePart(editingPart.id, { 
+      await updatePartMutation.mutateAsync([editingPart.id, { 
         ...editingPart, 
         invoice_url: invoiceUrl,
         invoice_number: editingPart.invoice_number
-      });
+      }]);
       
       alert('Invoice uploaded successfully');
       setInvoiceFile(null);
       setUploadProgress(0);
-      fetchParts();
     } catch (error) {
       console.error('Error uploading invoice:', error);
       alert(`Failed to upload invoice: ${error.message}`);
