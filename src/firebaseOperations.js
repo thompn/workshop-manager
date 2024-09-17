@@ -190,7 +190,8 @@ export const suppliersStructure = {
   postal_code: '',
   country: '',
   notes: '',
-  website: ''
+  website: '',
+  search_url: ''
 };
 
 export const storageLocationStructure = {
@@ -263,9 +264,34 @@ export async function getPartsLowOnStock(threshold) {
 
 // Add these functions after the existing CRUD operations
 
-export const addNewSupplier = (data) => createDocument('suppliers', data);
+export const addNewSupplier = async (data) => {
+  try {
+    const docRef = await addDoc(collection(db, 'suppliers'), {
+      ...data,
+      search_url: data.search_url || '',
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding new supplier:", error);
+    throw error;
+  }
+};
+
 export const getSupplier = (id) => readDocument('suppliers', id);
-export const updateSupplier = (id, data) => updateDocument('suppliers', id, data);
+
+export const updateSupplier = async (id, data) => {
+  try {
+    const supplierRef = doc(db, 'suppliers', id);
+    await updateDoc(supplierRef, {
+      ...data,
+      search_url: data.search_url || '',
+    });
+  } catch (error) {
+    console.error("Error updating supplier:", error);
+    throw error;
+  }
+};
+
 export const deleteSupplier = (id) => deleteDocument('suppliers', id);
 export const getAllSuppliers = () => getAllDocuments('suppliers');
 

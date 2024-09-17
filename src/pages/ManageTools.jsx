@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllTools, getToolsByCategory, getAllLocations, addNewTool, updateTool, deleteTool } from '../firebaseOperations';
-import { FaPlus, FaMinus, FaEdit } from 'react-icons/fa';
+import { FaPlus, FaMinus, FaEdit, FaSearch, FaTrash } from 'react-icons/fa';
+import { naturalSort } from '../utils/naturalSort';
 
 const ManageTools = () => {
   const [tools, setTools] = useState([
@@ -32,6 +33,9 @@ const ManageTools = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const toolsPerPage = 10;
   const [expandedTool, setExpandedTool] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState('all');
+  const [categories, setCategories] = useState(['all']);
 
   const renderToolForm = (tool, setTool, onSubmit, submitButtonText) => {
     return (
@@ -82,6 +86,15 @@ const ManageTools = () => {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const toolsData = await getAllTools();
+      const uniqueCategories = ['all', ...new Set(toolsData.map(tool => tool.category))];
+      setCategories(uniqueCategories);
+    };
+    fetchCategories();
   }, []);
 
   const handleInputChange = (e) => {
@@ -162,9 +175,14 @@ const ManageTools = () => {
     }
   };
 
-  const indexOfLastTool = currentPage * toolsPerPage;
-  const indexOfFirstTool = indexOfLastTool - toolsPerPage;
-  const currentTools = tools.slice(indexOfFirstTool, indexOfLastTool);
+  const filteredTools = tools.filter(tool => 
+    (tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tool.asset_tag.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (category === 'all' || tool.category === category)
+  );
+
+  const totalPages = Math.ceil(filteredTools.length / toolsPerPage);
+  const currentTools = filteredTools.slice((currentPage - 1) * toolsPerPage, currentPage * toolsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -172,6 +190,11 @@ const ManageTools = () => {
     const toolToEdit = tools.find(tool => tool.id === toolId);
     setEditingTool(toolToEdit);
     setExpandedTool(expandedTool === toolId ? null : toolId);
+  };
+
+  const getLocationName = (locationId) => {
+    const location = locations.find(loc => loc.id === locationId);
+    return location ? location.name : 'N/A';
   };
 
   return (
@@ -219,7 +242,7 @@ const ManageTools = () => {
                         className="mt-2 p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                       >
                         <option value="">Select Location</option>
-                        {filteredLocations.map(location => (
+                        {filteredLocations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
                           <option key={location.id} value={location.id}>{location.name}</option>
                         ))}
                       </select>
@@ -250,12 +273,39 @@ const ManageTools = () => {
       {/* List of existing tools */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <h2 className="text-2xl font-bold p-4">Existing Tools</h2>
+        <div className="mb-6 flex space-x-4">
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              placeholder="Search tools..."
+              className="w-full p-2 pl-8 pr-4 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+          </div>
+          <select
+            className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'all' ? 'All Categories' : cat}
+              </option>
+            ))}
+          </select>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="bg-gray-200 dark:bg-gray-700">
               <th className="p-2 text-left">Asset Tag</th>
               <th className="p-2 text-left">Name</th>
+              <th className="p-2 text-left">Manufacturer</th>
+              <th className="p-2 text-left">Type</th>
               <th className="p-2 text-left">Category</th>
+              <th className="p-2 text-left">Location</th>
+              <th className="p-2 text-left">Quantity</th>
               <th className="p-2 text-left">Actions</th>
             </tr>
           </thead>
@@ -265,7 +315,17 @@ const ManageTools = () => {
                 <tr className="border-b dark:border-gray-700">
                   <td className="p-2">{tool.asset_tag}</td>
                   <td className="p-2">{tool.name}</td>
+                  <td className="p-2">{tool.manufacturer}</td>
+                  <td className="p-2">{tool.type}</td>
                   <td className="p-2">{tool.category}</td>
+                  <td className="p-2">
+                    {tool.location_id ? (
+                      <Link to={`/locations/${tool.location_id}`} className="text-blue-500 hover:text-blue-700">
+                        {getLocationName(tool.location_id)}
+                      </Link>
+                    ) : 'N/A'}
+                  </td>
+                  <td className="p-2">{tool.quantity}</td>
                   <td className="p-2">
                     <button
                       onClick={() => handleEditClick(tool.id)}
@@ -275,29 +335,23 @@ const ManageTools = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteTool(tool.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
+                      className="text-red-500 hover:text-red-700"
                     >
-                      Delete
+                      <FaTrash className="text-xl" />
                     </button>
                   </td>
                 </tr>
                 {expandedTool === tool.id && (
                   <tr>
-                    <td colSpan="5">
-                      <div className={`bg-gray-100 dark:bg-gray-800 p-4 transition-all duration-300 ${expandedTool === tool.id ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                        {renderToolForm(
-                          editingTool,
-                          setEditingTool,
-                          (updatedTool) => handleEditTool(updatedTool.id, updatedTool),
-                          "Save Changes"
-                        )}
-                        <button
-                          onClick={() => setExpandedTool(null)}
-                          className="mt-4 ml-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                    <td colSpan="8" className="p-4 bg-gray-50 dark:bg-gray-900">
+                      <h3 className="text-lg font-semibold mb-2">{tool.name} Details</h3>
+                      <p><strong>Size:</strong> {tool.size || 'N/A'}</p>
+                      <p><strong>Invoice Number:</strong> {tool.invoice_number || 'N/A'}</p>
+                      <p><strong>Cost:</strong> {typeof tool.cost === 'number' ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
+                      <p><strong>Last Maintenance:</strong> {tool.last_maintenance_date ? new Date(tool.last_maintenance_date).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Next Maintenance Due:</strong> {tool.next_maintenance_due ? new Date(tool.next_maintenance_due).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Condition:</strong> {tool.condition || 'N/A'}</p>
+                      <p><strong>Notes:</strong> {tool.notes || 'N/A'}</p>
                     </td>
                   </tr>
                 )}
@@ -305,19 +359,23 @@ const ManageTools = () => {
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="mt-4 flex justify-center">
-        {Array.from({ length: Math.ceil(tools.length / toolsPerPage) }, (_, i) => (
+        <div className="mt-6 flex justify-between items-center">
           <button
-            key={i}
-            onClick={() => paginate(i + 1)}
-            className={`mx-1 px-3 py-1 rounded ${
-              currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
           >
-            {i + 1}
+            Previous
           </button>
-        ))}
+          <span>Page {currentPage} of {totalPages}</span>
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

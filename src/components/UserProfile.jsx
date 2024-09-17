@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FaUpload } from 'react-icons/fa';
 
 const UserProfile = () => {
   const { currentUser, updateUserProfile, getUserProfile } = useAuth();
@@ -137,6 +139,16 @@ const UserProfile = () => {
           Update Profile
         </button>
       </form>
+      
+      
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Admin Actions</h2>
+          <Link to="/admin/upload" className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+            <FaUpload className="mr-2" />
+            Admin Upload
+          </Link>
+        </div>
+
     </div>
   );
 };
