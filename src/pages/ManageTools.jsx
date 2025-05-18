@@ -36,6 +36,23 @@ const ManageTools = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('all');
   const [categories, setCategories] = useState(['all']);
+  const [formToolCategoryOptions, setFormToolCategoryOptions] = useState([]);
+  const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
+
+  // Define the desired order of fields for the tool form
+  const toolFormFields = [
+    { name: 'name', label: 'Name', type: 'text' },
+    { name: 'manufacturer', label: 'Manufacturer', type: 'text' },
+    { name: 'type', label: 'Type', type: 'text' },
+    { name: 'size', label: 'Size', type: 'text' },
+    { name: 'invoice_number', label: 'Invoice Number', type: 'text' },
+    { name: 'cost', label: 'Cost', type: 'number' },
+    { name: 'quantity', label: 'Quantity', type: 'number' },
+    { name: 'last_maintenance_date', label: 'Last Maintenance Date', type: 'date' },
+    { name: 'next_maintenance_due', label: 'Next Maintenance Due', type: 'date' },
+    { name: 'condition', label: 'Condition', type: 'text' },
+    { name: 'notes', label: 'Notes', type: 'text' },
+  ];
 
   const renderToolForm = (tool, setTool, onSubmit, submitButtonText) => {
     return (
@@ -43,24 +60,53 @@ const ManageTools = () => {
         e.preventDefault();
         onSubmit(tool);
       }} className="grid grid-cols-2 gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        {Object.keys(tool).map((key) => {
-          if (key === 'id' || key === 'asset_tag') return null;
-          return (
-            <div key={key} className="mb-2">
-              <label htmlFor={key} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
-              </label>
-              <input
-                type={key === 'cost' || key === 'quantity' ? 'number' : key.includes('date') ? 'date' : 'text'}
-                id={key}
-                name={key}
-                value={tool[key]}
-                onChange={(e) => setTool({ ...tool, [key]: e.target.value })}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          );
-        })}
+        {toolFormFields.map((field) => (
+          <div key={field.name} className="mb-2">
+            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={field.name}
+              name={field.name}
+              value={tool[field.name] || ''}
+              onChange={(e) => setTool({ ...tool, [field.name]: e.target.type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value })}
+              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        ))}
+        <div className="flex flex-col mb-2">
+          <label htmlFor="edit_category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Category
+          </label>
+          <input
+            type="text"
+            id="edit_category"
+            name="category"
+            list="tool-category-datalist"
+            value={tool.category || ''}
+            onChange={(e) => setTool({ ...tool, category: e.target.value })}
+            className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Select or type new category"
+          />
+        </div>
+        <div className="flex flex-col mb-2">
+          <label htmlFor="location_id_edit_search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Location
+          </label>
+          <select
+            id="location_id_edit"
+            name="location_id"
+            value={tool.location_id || ''}
+            onChange={(e) => setTool({ ...tool, location_id: e.target.value })}
+            className="p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+          >
+            <option value="">Select Location</option>
+            {filteredLocations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
+              <option key={location.id} value={location.id}>{location.name}</option>
+            ))}
+          </select>
+        </div>
         <div className="col-span-2">
           <button type="submit" className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
             {submitButtonText}
@@ -73,28 +119,24 @@ const ManageTools = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [toolsData, locationsData] = await Promise.all([
+        const [toolsDataResponse, locationsData] = await Promise.all([
           getAllTools(),
           getAllLocations()
         ]);
-        setTools(toolsData);
+        setTools(toolsDataResponse);
         setLocations(locationsData);
         setFilteredLocations(locationsData);
+
+        const uniqueToolCategories = [...new Set(toolsDataResponse.map(t => t.category).filter(cat => cat))];
+        setCategories(['all', ...uniqueToolCategories.sort((a, b) => a.localeCompare(b))]);
+        setFormToolCategoryOptions(uniqueToolCategories.sort((a, b) => a.localeCompare(b)));
+
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const toolsData = await getAllTools();
-      const uniqueCategories = ['all', ...new Set(toolsData.map(tool => tool.category))];
-      setCategories(uniqueCategories);
-    };
-    fetchCategories();
   }, []);
 
   const handleInputChange = (e) => {
@@ -178,7 +220,8 @@ const ManageTools = () => {
   const filteredTools = tools.filter(tool => 
     (tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tool.asset_tag.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (category === 'all' || tool.category === category)
+    (category === 'all' || tool.category === category) &&
+    (!showUnassignedOnly || !tool.location_id)
   );
 
   const totalPages = Math.ceil(filteredTools.length / toolsPerPage);
@@ -218,48 +261,53 @@ const ManageTools = () => {
         <div className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow transition-all duration-300 ease-in-out">
           <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Add New Tool</h2>
           <div className="grid grid-cols-2 gap-4">
-            {Object.entries(newTool).map(([key, value]) => (
-              key !== 'asset_tag' && (
-                <div key={key} className="flex flex-col">
-                  <label htmlFor={key} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                  </label>
-                  {key === 'location_id' ? (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        id={`${key}_search`}
-                        placeholder="Search locations..."
-                        value={locationSearch}
-                        onChange={handleLocationSearch}
-                        className="p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                      />
-                      <select
-                        id={key}
-                        name={key}
-                        value={value}
-                        onChange={handleInputChange}
-                        className="mt-2 p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                      >
-                        <option value="">Select Location</option>
-                        {filteredLocations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
-                          <option key={location.id} value={location.id}>{location.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <input
-                      type={key.includes('date') ? 'date' : key === 'cost' || key === 'quantity' ? 'number' : 'text'}
-                      id={key}
-                      name={key}
-                      value={value}
-                      onChange={handleInputChange}
-                      className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                    />
-                  )}
-                </div>
-              )
+            {toolFormFields.map((field) => (
+              <div key={field.name} className="flex flex-col">
+                <label htmlFor={`new_${field.name}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {field.label}
+                </label>
+                <input
+                  type={field.type}
+                  id={`new_${field.name}`}
+                  name={field.name}
+                  value={newTool[field.name] || ''}
+                  onChange={handleInputChange}
+                  className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                />
+              </div>
             ))}
+            <div className="flex flex-col">
+              <label htmlFor="new_category" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Category
+              </label>
+              <input
+                type="text"
+                id="new_category"
+                name="category"
+                list="tool-category-datalist"
+                value={newTool.category || ''}
+                onChange={handleInputChange}
+                className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                placeholder="Select or type new category"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="new_location_id_search" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Location
+              </label>
+              <select
+                id="new_location_id"
+                name="location_id"
+                value={newTool.location_id || ''}
+                onChange={handleInputChange}
+                className="p-2 border rounded w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+              >
+                <option value="">Select Location</option>
+                {filteredLocations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
+                  <option key={location.id} value={location.id}>{location.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <button
             onClick={newTool.id ? () => handleEditTool(newTool.id, newTool) : handleAddTool}
@@ -295,6 +343,18 @@ const ManageTools = () => {
               </option>
             ))}
           </select>
+          <div className="flex items-center ml-4">
+            <input
+              type="checkbox"
+              id="showUnassignedManageToolsOnly"
+              checked={showUnassignedOnly}
+              onChange={(e) => setShowUnassignedOnly(e.target.checked)}
+              className="mr-2 h-4 w-4 bg-white rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:checked:bg-blue-500 dark:checked:border-transparent"
+            />
+            <label htmlFor="showUnassignedManageToolsOnly" className="text-sm text-gray-700 dark:text-gray-300">
+              Show unassigned only
+            </label>
+          </div>
         </div>
         <table className="w-full">
           <thead>
@@ -344,14 +404,36 @@ const ManageTools = () => {
                 {expandedTool === tool.id && (
                   <tr>
                     <td colSpan="8" className="p-4 bg-gray-50 dark:bg-gray-900">
-                      <h3 className="text-lg font-semibold mb-2">{tool.name} Details</h3>
-                      <p><strong>Size:</strong> {tool.size || 'N/A'}</p>
-                      <p><strong>Invoice Number:</strong> {tool.invoice_number || 'N/A'}</p>
-                      <p><strong>Cost:</strong> {typeof tool.cost === 'number' ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
-                      <p><strong>Last Maintenance:</strong> {tool.last_maintenance_date ? new Date(tool.last_maintenance_date).toLocaleDateString() : 'N/A'}</p>
-                      <p><strong>Next Maintenance Due:</strong> {tool.next_maintenance_due ? new Date(tool.next_maintenance_due).toLocaleDateString() : 'N/A'}</p>
-                      <p><strong>Condition:</strong> {tool.condition || 'N/A'}</p>
-                      <p><strong>Notes:</strong> {tool.notes || 'N/A'}</p>
+                      {editingTool && editingTool.id === tool.id ? (
+                        <>
+                          {renderToolForm(
+                            editingTool,
+                            setEditingTool,
+                            () => handleEditTool(editingTool.id, editingTool),
+                            "Save Changes"
+                          )}
+                          <button
+                            onClick={() => {
+                              setEditingTool(null);
+                              setExpandedTool(null);
+                            }}
+                            className="mt-4 ml-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-lg font-semibold mb-2">{tool.name} Details</h3>
+                          <p><strong>Size:</strong> {tool.size || 'N/A'}</p>
+                          <p><strong>Invoice Number:</strong> {tool.invoice_number || 'N/A'}</p>
+                          <p><strong>Cost:</strong> {typeof tool.cost === 'number' ? `$${tool.cost.toFixed(2)}` : 'N/A'}</p>
+                          <p><strong>Last Maintenance:</strong> {tool.last_maintenance_date ? new Date(tool.last_maintenance_date).toLocaleDateString() : 'N/A'}</p>
+                          <p><strong>Next Maintenance Due:</strong> {tool.next_maintenance_due ? new Date(tool.next_maintenance_due).toLocaleDateString() : 'N/A'}</p>
+                          <p><strong>Condition:</strong> {tool.condition || 'N/A'}</p>
+                          <p><strong>Notes:</strong> {tool.notes || 'N/A'}</p>
+                        </>
+                      )}
                     </td>
                   </tr>
                 )}

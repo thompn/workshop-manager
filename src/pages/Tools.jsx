@@ -14,6 +14,7 @@ const Tools = () => {
   const [categories, setCategories] = useState(['all']);
   const [manufacturer, setManufacturer] = useState('all');
   const [manufacturers, setManufacturers] = useState(['all']);
+  const [showUnassignedToolsOnly, setShowUnassignedToolsOnly] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,8 +30,14 @@ const Tools = () => {
 
         const uniqueCategories = ['all', ...new Set(toolsData.map(tool => tool.category))];
         const uniqueManufacturers = ['all', ...new Set(toolsData.map(tool => tool.manufacturer))];
-        setCategories(uniqueCategories);
-        setManufacturers(uniqueManufacturers);
+        
+        // Sort categories alphabetically, keeping 'all' at the top
+        const sortedCategories = ['all', ...uniqueCategories.filter(cat => cat !== 'all').sort((a, b) => a.localeCompare(b))];
+        setCategories(sortedCategories);
+
+        // Sort manufacturers alphabetically, keeping 'all' at the top
+        const sortedManufacturers = ['all', ...uniqueManufacturers.filter(man => man !== 'all').sort((a, b) => a.localeCompare(b))];
+        setManufacturers(sortedManufacturers);
 
         // Sort tools by asset_tag
         const sortedTools = toolsData.sort((a, b) => a.asset_tag.localeCompare(b.asset_tag));
@@ -92,7 +99,9 @@ const Tools = () => {
 
   const filteredTools = tools.filter(tool =>
     tool.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (category === 'all' || tool.category === category)
+    (category === 'all' || tool.category === category) &&
+    (manufacturer === 'all' || tool.manufacturer === manufacturer) &&
+    (!showUnassignedToolsOnly || !tool.location_id)
   );
 
   const itemsPerPage = 10;
@@ -142,6 +151,18 @@ const Tools = () => {
             <option key={manu} value={manu}>{manu === 'all' ? 'All Manufacturers' : manu}</option>
           ))}
         </select>
+        <div className="flex items-center ml-4">
+          <input
+            type="checkbox"
+            id="showUnassignedToolsOnly"
+            checked={showUnassignedToolsOnly}
+            onChange={(e) => setShowUnassignedToolsOnly(e.target.checked)}
+            className="mr-2 h-4 w-4 bg-white rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:checked:bg-blue-500 dark:checked:border-transparent"
+          />
+          <label htmlFor="showUnassignedToolsOnly" className="text-sm text-gray-700 dark:text-gray-300">
+            Show unassigned only
+          </label>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">

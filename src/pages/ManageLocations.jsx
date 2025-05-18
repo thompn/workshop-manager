@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { addNewLocation, getAllLocations, updateLocation, deleteLocation } from '../firebaseOperations';
+import { addNewLocation, getAllLocations, updateLocation, deleteLocation, getAllParts, getAllTools } from '../firebaseOperations';
 import { FaEdit, FaTrash, FaChevronUp, FaChevronDown, FaPlus, FaMinus } from 'react-icons/fa';
+import { naturalSort } from '../utils/naturalSort';
 
 const ManageLocations = () => {
   const [locations, setLocations] = useState([]);
@@ -178,15 +179,21 @@ const ManageLocations = () => {
     )
   );
 
-  const sortedAndFilteredLocations = filteredLocations.sort((a, b) => {
-    if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
-    if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
+  const sortedAndFilteredLocations = [...filteredLocations].sort((a, b) => {
+    if (sortColumn === 'name') {
+      const comparison = naturalSort(a.name, b.name);
+      return sortDirection === 'asc' ? comparison : -comparison;
+    } else {
+      if (a[sortColumn] < b[sortColumn]) return sortDirection === 'asc' ? -1 : 1;
+      if (a[sortColumn] > b[sortColumn]) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    }
   });
 
   const indexOfLastLocation = currentPage * locationsPerPage;
   const indexOfFirstLocation = indexOfLastLocation - locationsPerPage;
   const currentLocations = sortedAndFilteredLocations.slice(indexOfFirstLocation, indexOfLastLocation);
+  const totalPagesForLocations = Math.ceil(sortedAndFilteredLocations.length / locationsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -253,13 +260,6 @@ const ManageLocations = () => {
                     <Link to={`/locations/${location.id}`} className="text-blue-500 hover:text-blue-700">
                       {location.name}
                     </Link>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {itemsInLocation[location.id] && Object.entries(itemsInLocation[location.id]).map(([itemId, item]) => (
-                        <div key={itemId}>
-                          {item.quantity}x {item.name} ({item.asset_tag})
-                        </div>
-                      ))}
-                    </div>
                   </td>
                   <td className="p-2 text-gray-800 dark:text-white">{location.type}</td>
                   <td className="p-2 text-gray-800 dark:text-white">{location.description}</td>
@@ -316,18 +316,22 @@ const ManageLocations = () => {
       </div>
 
       {/* Pagination */}
-      <div className="mt-4 flex justify-center">
-        {Array.from({ length: Math.ceil(sortedAndFilteredLocations.length / locationsPerPage) }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => paginate(i + 1)}
-            className={`mx-1 px-3 py-1 rounded ${
-              currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            {i + 1}
-          </button>
-        ))}
+      <div className="mt-6 flex justify-between items-center">
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span>Page {currentPage} of {totalPagesForLocations > 0 ? totalPagesForLocations : 1}</span>
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPagesForLocations))}
+          disabled={currentPage === totalPagesForLocations || totalPagesForLocations === 0}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

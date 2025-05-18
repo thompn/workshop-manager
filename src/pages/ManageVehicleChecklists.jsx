@@ -122,6 +122,41 @@ const ManageVehicleChecklists = () => {
     }
   };
 
+  const handleRemoveServiceType = async () => {
+    if (!selectedVehicleId || !selectedServiceType) return;
+
+    if (window.confirm(`Are you sure you want to remove the service type "${selectedServiceType}" from this vehicle? This will not delete existing checklists, but they may become hidden if no vehicle uses this service type.`)) {
+      const vehicleRef = doc(db, 'vehicles', selectedVehicleId);
+      const vehicleDoc = await getDoc(vehicleRef);
+
+      if (vehicleDoc.exists()) {
+        const currentServiceTypes = vehicleDoc.data().serviceTypes || [];
+        const updatedServiceTypes = currentServiceTypes.filter(type => type !== selectedServiceType);
+
+        await updateDoc(vehicleRef, {
+          serviceTypes: updatedServiceTypes
+        });
+
+        setVehicles(prevVehicles =>
+          prevVehicles.map(v =>
+            v.id === selectedVehicleId
+              ? { ...v, serviceTypes: updatedServiceTypes }
+              : v
+          )
+        );
+        
+        // Reset related state
+        setSelectedServiceType('');
+        setChecklist([]);
+        setServiceInterval('');
+        setIsCreatingNewChecklist(false);
+      } else {
+        console.error("Vehicle not found for removing service type.");
+        alert("Error: Vehicle not found.");
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Manage Vehicle Checklists</h1>
@@ -152,6 +187,15 @@ const ManageVehicleChecklists = () => {
                 <option key={type} value={type}>{type}</option>
               )) || []}
             </select>
+            {selectedServiceType && (
+              <button
+                onClick={handleRemoveServiceType}
+                className="ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
+                title="Remove selected service type from this vehicle"
+              >
+                Remove Type
+              </button>
+            )}
             {!selectedServiceType && (
               <div className="flex">
                 <input

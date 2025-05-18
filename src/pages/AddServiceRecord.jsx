@@ -7,10 +7,12 @@ import VehicleServiceChecklist from '../components/VehicleServiceChecklist';
 import Select from 'react-select';
 import { useParts } from '../context/PartsContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const AddServiceRecord = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [vehicle, setVehicle] = useState(null);
   const [serviceTasks, setServiceTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,11 +119,16 @@ const AddServiceRecord = () => {
   const fetchParts = async () => {
     try {
       const partsData = await getAllParts();
+      const currentVehicleId = id;
+      
       setParts(partsData
-        .filter(part => part.stock_level > 0)
+        .filter(part => 
+          part.stock_level > 0 && 
+          (part.vehicle_id === currentVehicleId || !part.vehicle_id || part.vehicle_id === '')
+        )
         .map(part => ({
           value: part.id,
-          label: `${part.part_number_oem} - ${part.description}`,
+          label: `${part.part_number_oem} - ${part.description}${part.vehicle_id ? ' (Assigned to this vehicle)' : ' (Unassigned)'}`,
           ...part
         }))
       );
@@ -388,24 +395,43 @@ const AddServiceRecord = () => {
             styles={{
               control: (provided) => ({
                 ...provided,
-                backgroundColor: 'white',
-                borderColor: '#e2e8f0',
+                backgroundColor: theme === 'dark' ? '#1F2937' : 'white',
+                borderColor: theme === 'dark' ? '#4B5563' : '#D1D5DB',
+                color: theme === 'dark' ? '#F3F4F6' : '#111827',
                 '&:hover': {
-                  borderColor: '#cbd5e0',
+                  borderColor: theme === 'dark' ? '#6B7280' : '#9CA3AF',
                 },
+              }),
+              input: (provided) => ({
+                ...provided,
+                color: theme === 'dark' ? '#F3F4F6' : '#111827',
+              }),
+              singleValue: (provided) => ({
+                ...provided,
+                color: theme === 'dark' ? '#F3F4F6' : '#111827',
               }),
               menu: (provided) => ({
                 ...provided,
-                backgroundColor: 'white',
+                backgroundColor: theme === 'dark' ? '#1F2937' : 'white',
               }),
               option: (provided, state) => ({
                 ...provided,
-                backgroundColor: state.isSelected ? '#3b82f6' : 'white',
-                color: state.isSelected ? 'white' : 'black',
+                backgroundColor: state.isSelected 
+                  ? '#3B82F6'
+                  : state.isFocused 
+                    ? (theme === 'dark' ? '#374151' : '#DBEAFE')
+                    : (theme === 'dark' ? '#1F2937' : 'white'),
+                color: state.isSelected 
+                  ? 'white' 
+                  : (theme === 'dark' ? '#F3F4F6' : '#111827'),
                 '&:hover': {
-                  backgroundColor: '#bfdbfe',
-                  color: 'black',
+                  backgroundColor: !state.isSelected ? (theme === 'dark' ? '#374151' : '#DBEAFE') : '#3B82F6',
+                  color: !state.isSelected ? (theme === 'dark' ? '#F3F4F6' : '#111827') : 'white',
                 },
+              }),
+              placeholder: (provided) => ({
+                ...provided,
+                color: theme === 'dark' ? '#9CA3AF' : '#6B7280',
               }),
             }}
           />

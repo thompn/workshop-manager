@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getAllParts, addNewPart, updatePart, deletePart, getAllVehicles, getAllLocations, uploadInvoiceToStorage, getPartsByCategory } from '../firebaseOperations';
+import { getAllParts, addNewPart, updatePart, deletePart, getAllVehicles, getAllLocations, uploadInvoiceToStorage, getPartsByCategory, getAllSuppliers } from '../firebaseOperations';
 import { FaEdit, FaTrash, FaPlus, FaMinus, FaSearch } from 'react-icons/fa';
 import { getDownloadURL } from 'firebase/storage';
 import { naturalSort } from '../utils/naturalSort';
@@ -25,6 +25,7 @@ const ManageParts = () => {
   const [vehicles, setVehicles] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [locations, setLocations] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [expandedPart, setExpandedPart] = useState(null);
@@ -32,6 +33,8 @@ const ManageParts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [category, setCategory] = useState('all');
   const [categories, setCategories] = useState(['all']);
+  const [formCategoryOptions, setFormCategoryOptions] = useState([]);
+  const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
 
@@ -50,11 +53,14 @@ const ManageParts = () => {
     },
   });
 
-  const updatePartMutation = useMutation(updatePart, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('parts');
-    },
-  });
+  const updatePartMutation = useMutation(
+    (variables) => updatePart(variables.id, variables.payload),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('parts');
+      },
+    }
+  );
 
   const deletePartMutation = useMutation(deletePart, {
     onSuccess: () => {
@@ -65,16 +71,20 @@ const ManageParts = () => {
   useEffect(() => {
     fetchVehicles();
     fetchLocations();
+    fetchSuppliers();
   }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
       const partsData = await getAllParts();
-      const uniqueCategories = ['all', ...new Set(partsData.map(part => part.category))];
-      setCategories(uniqueCategories);
+      const uniqueCategoriesFromParts = [...new Set(partsData.map(part => part.category).filter(cat => cat))];
+      
+      setCategories(['all', ...uniqueCategoriesFromParts.sort((a, b) => a.localeCompare(b))]);
+      
+      setFormCategoryOptions(uniqueCategoriesFromParts.sort((a, b) => a.localeCompare(b)));
     };
     fetchCategories();
-  }, []);
+  }, [parts]);
 
   const fetchVehicles = async () => {
     try {
@@ -94,12 +104,34 @@ const ManageParts = () => {
     }
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const suppliersData = await getAllSuppliers();
+      setSuppliers(suppliersData);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+    }
+  };
+
   const handleInputChange = (e, state, setState) => {
     const { name, value, type, checked } = e.target;
-    setState(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? (value === '' ? '' : Number(value)) : value
-    }));
+    const oldState = { ...state }; // Capture the old state before updating
+
+    setState(prev => {
+      const newState = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : type === 'number' ? (value === '' ? '' : Number(value)) : value
+      };
+
+      // Auto-populate part_number_vendor from part_number_oem for newPart
+      if (setState === setNewPart && name === 'part_number_oem') {
+        // Only update if part_number_vendor was empty or same as old part_number_oem
+        if (oldState.part_number_vendor === '' || oldState.part_number_vendor === oldState.part_number_oem) {
+          newState.part_number_vendor = value;
+        }
+      }
+      return newState;
+    });
   };
 
   const handleAddPart = async () => {
@@ -134,11 +166,13 @@ const ManageParts = () => {
       if (!editingPart.part_number_oem || !editingPart.description) {
         throw new Error("Part number (OEM) and description are required.");
       }
-      await updatePartMutation.mutateAsync([editingPart.id, editingPart]);
+      await updatePartMutation.mutateAsync({ id: editingPart.id, payload: editingPart });
       setEditingPart(null);
+      setExpandedPart(null);
       alert("Part updated successfully!");
     } catch (error) {
-      console.error("Error updating part:", error);
+      console.error("Error updating part. Data sent was:", JSON.stringify(editingPart, null, 2));
+      console.error("Full error object:", error);
       alert(`Failed to update part: ${error.message}`);
     }
   };
@@ -173,11 +207,14 @@ const ManageParts = () => {
       const invoiceUrl = await getDownloadURL(invoiceRef);
       
       // Update the part with the invoice URL and invoice number
-      await updatePartMutation.mutateAsync([editingPart.id, { 
-        ...editingPart, 
-        invoice_url: invoiceUrl,
-        invoice_number: editingPart.invoice_number
-      }]);
+      await updatePartMutation.mutateAsync({ 
+        id: editingPart.id, 
+        payload: { 
+          ...editingPart, 
+          invoice_url: invoiceUrl,
+          invoice_number: editingPart.invoice_number
+        }
+      });
       
       alert('Invoice uploaded successfully');
       setInvoiceFile(null);
@@ -194,11 +231,9 @@ const ManageParts = () => {
         { name: "part_number_oem", label: "OEM Part Number", type: "text" },
         { name: "part_number_vendor", label: "Vendor Part Number", type: "text" },
         { name: "description", label: "Description", type: "text" },
-        { name: "category", label: "Category", type: "text" },
         { name: "cost", label: "Cost", type: "number" },
         { name: "stock_level", label: "Stock Level", type: "number" },
         { name: "reorder_threshold", label: "Reorder Threshold", type: "number" },
-        { name: "location_id", label: "Location ID", type: "text" },
         { name: "invoice_number", label: "Invoice Number", type: "text" },
       ].map((field) => (
         <div key={field.name} className="flex flex-col">
@@ -209,12 +244,32 @@ const ManageParts = () => {
             type={field.type}
             id={field.name}
             name={field.name}
-            value={part[field.name]}
+            value={part[field.name] || ''}
             onChange={(e) => handleInputChange(e, part, setPart)}
             className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
         </div>
       ))}
+      <div className="flex flex-col">
+        <label htmlFor="category" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Category
+        </label>
+        <input
+          type="text"
+          id="category"
+          name="category"
+          list="category-datalist"
+          value={part.category || ''}
+          onChange={(e) => handleInputChange(e, part, setPart)}
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          placeholder="Select or type new category"
+        />
+        <datalist id="category-datalist">
+          {formCategoryOptions.map(cat => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
+      </div>
       <div className="flex items-center">
         <input
           type="checkbox"
@@ -257,11 +312,11 @@ const ManageParts = () => {
           className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
         >
           <option value="">Select Supplier</option>
-          {/* {suppliers.map(supplier => (
+          {suppliers.sort((a, b) => naturalSort(a.name, b.name)).map(supplier => (
             <option key={supplier.id} value={supplier.id}>
               {supplier.name}
             </option>
-          ))} */}
+          ))}
         </select>
       </div>
       <div className="flex flex-col">
@@ -318,11 +373,12 @@ const ManageParts = () => {
     setExpandedPart(expandedPart === partId ? null : partId);
   };
 
-  const filteredParts = parts.filter(part => 
+  const filteredParts = Array.isArray(parts) ? parts.filter(part => 
     (part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
     part.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (category === 'all' || part.category === category)
-  );
+    (category === 'all' || part.category === category) &&
+    (!showUnassignedOnly || !part.location_id)
+  ) : [];
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
   const currentParts = filteredParts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -379,6 +435,18 @@ const ManageParts = () => {
             </option>
           ))}
         </select>
+        <div className="flex items-center ml-4">
+          <input
+            type="checkbox"
+            id="showUnassignedManagePartsOnly"
+            checked={showUnassignedOnly}
+            onChange={(e) => setShowUnassignedOnly(e.target.checked)}
+            className="mr-2 h-4 w-4 bg-white rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:checked:bg-blue-500 dark:checked:border-transparent"
+          />
+          <label htmlFor="showUnassignedManagePartsOnly" className="text-sm text-gray-700 dark:text-gray-300">
+            Show unassigned only
+          </label>
+        </div>
       </div>
       {/* List of existing parts */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -399,18 +467,6 @@ const ManageParts = () => {
               <React.Fragment key={part.id}>
                 <tr className="border-b dark:border-gray-700">
                   <td className="p-2 text-gray-800 dark:text-white">
-                    {/* {part.supplier_id && suppliers.find(s => s.id === part.supplier_id)?.search_url ? (
-                      <a
-                        href={`${suppliers.find(s => s.id === part.supplier_id).search_url}${part.part_number_oem}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        {part.part_number_oem}
-                      </a>
-                    ) : (
-                      part.part_number_oem
-                    )} */}
                     {part.part_number_oem}
                   </td>
                   <td className="p-2 text-gray-800 dark:text-white">{part.description}</td>
