@@ -4,8 +4,10 @@ import { getLocation, getAllParts, getAllTools, updatePart, updateTool, getAllVe
 import { FaPlus, FaMinus, FaPrint } from 'react-icons/fa';
 import { QRCodeSVG } from 'qrcode.react';
 import { naturalSort } from '../utils/naturalSort';
+import { useNotification } from '../contexts/NotificationContext';
 
 const LocationDetails = () => {
+  const { showNotification } = useNotification();
   const { id } = useParams();
   const [location, setLocation] = useState(null);
   const [parts, setParts] = useState([]);
@@ -112,7 +114,7 @@ const LocationDetails = () => {
     const requestedQuantity = Number(quantityToAdd);
 
     if (requestedQuantity <= 0 || requestedQuantity > part.stock_level) {
-      alert(`Please enter a quantity between 1 and ${part.stock_level}.`);
+      showNotification(`Please enter a quantity between 1 and ${part.stock_level}.`, "error");
       return;
     }
 
@@ -136,10 +138,10 @@ const LocationDetails = () => {
       setShowQuantityModal(false);
       setItemForQuantityModal(null);
       fetchParts(); // Re-fetch parts to update both lists
-      alert('Part quantity updated for location successfully!');
+      showNotification('Part quantity updated for location successfully!', "success");
     } catch (error) {
       console.error("Error processing part quantity for location:", error);
-      alert(`Failed to process part quantity: ${error.message}`);
+      showNotification(`Failed to process part quantity: ${error.message}`, "error");
     }
   };
 
@@ -167,7 +169,7 @@ const LocationDetails = () => {
     const requestedQuantity = Number(quantityToAdd);
 
     if (requestedQuantity <= 0 || requestedQuantity > tool.quantity) {
-      alert(`Please enter a quantity between 1 and ${tool.quantity}.`);
+      showNotification(`Please enter a quantity between 1 and ${tool.quantity}.`, "error");
       return;
     }
 
@@ -191,10 +193,10 @@ const LocationDetails = () => {
       setShowQuantityModal(false);
       setItemForQuantityModal(null);
       fetchTools(); // Re-fetch tools to update both lists
-      alert('Tool quantity updated for location successfully!');
+      showNotification('Tool quantity updated for location successfully!', "success");
     } catch (error) {
       console.error("Error processing tool quantity for location:", error);
-      alert(`Failed to process tool quantity: ${error.message}`);
+      showNotification(`Failed to process tool quantity: ${error.message}`, "error");
     }
   };
 

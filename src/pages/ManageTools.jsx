@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { getAllTools, getToolsByCategory, getAllLocations, addNewTool, updateTool, deleteTool } from '../firebaseOperations';
 import { FaPlus, FaMinus, FaEdit, FaSearch, FaTrash } from 'react-icons/fa';
 import { naturalSort } from '../utils/naturalSort';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ManageTools = () => {
+  const { showNotification } = useNotification();
   const [tools, setTools] = useState([
     // ... (copy the toolsData array from Tools.jsx)
   ]);
@@ -173,9 +175,10 @@ const ManageTools = () => {
         notes: ''
       });
       await fetchTools();
+      showNotification("Tool added successfully!", "success");
     } catch (error) {
       console.error("Error adding tool:", error);
-      alert(`Failed to add tool: ${error.message}`);
+      showNotification(`Failed to add tool: ${error.message}`, "error");
     }
   };
 
@@ -192,9 +195,10 @@ const ManageTools = () => {
       await fetchTools();
       setEditingTool(null);
       setExpandedTool(null);
+      showNotification("Tool updated successfully!", "success");
     } catch (error) {
       console.error("Error updating tool:", error);
-      alert(`Failed to update tool: ${error.message}`);
+      showNotification(`Failed to update tool: ${error.message}`, "error");
     }
   };
 
@@ -202,9 +206,10 @@ const ManageTools = () => {
     try {
       await deleteTool(id);
       await fetchTools();
+      showNotification("Tool deleted successfully!", "success");
     } catch (error) {
       console.error("Error deleting tool:", error);
-      alert(`Failed to delete tool: ${error.message}`);
+      showNotification(`Failed to delete tool: ${error.message}`, "error");
     }
   };
 

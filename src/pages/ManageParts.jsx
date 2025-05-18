@@ -5,8 +5,10 @@ import { getAllParts, addNewPart, updatePart, deletePart, getAllVehicles, getAll
 import { FaEdit, FaTrash, FaPlus, FaMinus, FaSearch } from 'react-icons/fa';
 import { getDownloadURL } from 'firebase/storage';
 import { naturalSort } from '../utils/naturalSort';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ManageParts = () => {
+  const { showNotification } = useNotification();
   const [newPart, setNewPart] = useState({
     part_number_oem: '',
     part_number_vendor: '',
@@ -137,7 +139,8 @@ const ManageParts = () => {
   const handleAddPart = async () => {
     try {
       if (!newPart.part_number_oem || !newPart.description) {
-        throw new Error("Part number (OEM) and description are required.");
+        showNotification("Part number (OEM) and description are required.", "error");
+        return;
       }
       await addPartMutation.mutateAsync(newPart);
       setNewPart({
@@ -154,26 +157,27 @@ const ManageParts = () => {
         vehicle_id: '',
         invoice_number: ''
       });
-      alert("Part added successfully!");
+      showNotification("Part added successfully!", "success");
     } catch (error) {
       console.error("Error adding part:", error);
-      alert(`Failed to add part: ${error.message}`);
+      showNotification(`Failed to add part: ${error.message}`, "error");
     }
   };
 
   const handleEditPart = async () => {
     try {
       if (!editingPart.part_number_oem || !editingPart.description) {
-        throw new Error("Part number (OEM) and description are required.");
+        showNotification("Part number (OEM) and description are required.", "error");
+        return;
       }
       await updatePartMutation.mutateAsync({ id: editingPart.id, payload: editingPart });
       setEditingPart(null);
       setExpandedPart(null);
-      alert("Part updated successfully!");
+      showNotification("Part updated successfully!", "success");
     } catch (error) {
       console.error("Error updating part. Data sent was:", JSON.stringify(editingPart, null, 2));
       console.error("Full error object:", error);
-      alert(`Failed to update part: ${error.message}`);
+      showNotification(`Failed to update part: ${error.message}`, "error");
     }
   };
 
@@ -190,13 +194,13 @@ const ManageParts = () => {
     if (file && file.type === 'application/pdf') {
       setInvoiceFile(file);
     } else {
-      alert('Please select a PDF file');
+      showNotification('Please select a PDF file', "error");
     }
   };
 
   const uploadInvoice = async () => {
     if (!invoiceFile || !editingPart.invoice_number) {
-      alert('Please select an invoice file to upload and ensure the invoice number is set');
+      showNotification('Please select an invoice file to upload and ensure the invoice number is set', "error");
       return;
     }
 
@@ -216,12 +220,12 @@ const ManageParts = () => {
         }
       });
       
-      alert('Invoice uploaded successfully');
+      showNotification('Invoice uploaded successfully', "success");
       setInvoiceFile(null);
       setUploadProgress(0);
     } catch (error) {
       console.error('Error uploading invoice:', error);
-      alert(`Failed to upload invoice: ${error.message}`);
+      showNotification(`Failed to upload invoice: ${error.message}`, "error");
     }
   };
 
