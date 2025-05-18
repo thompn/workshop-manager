@@ -8,8 +8,10 @@ import Select from 'react-select';
 import { useParts } from '../context/PartsContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 const AddServiceRecord = () => {
+  const { showNotification } = useNotification();
   const { id } = useParams();
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -154,7 +156,7 @@ const AddServiceRecord = () => {
             index === existingPartIndex ? { ...part, quantity: part.quantity + 1 } : part
           );
         } else {
-          alert("Cannot add more of this part. Stock limit reached.");
+          showNotification("Cannot add more of this part. Stock limit reached.", "error");
           return;
         }
       } else {
@@ -210,7 +212,10 @@ const AddServiceRecord = () => {
     const part = serviceRecord.parts_used[index];
     const availableStock = parts.find(p => p.value === part.id)?.stock_level || 0;
 
-    if (part.quantity < availableStock) {
+    const originalPartFromList = parts.find(p => p.value === part.id);
+    const effectiveStockLimit = (originalPartFromList ? originalPartFromList.stock_level : 0) + part.quantity;
+
+    if (part.quantity < part.initial_stock_level) {
       const updatedPartsUsed = serviceRecord.parts_used.map((p, i) => 
         i === index ? { ...p, quantity: p.quantity + 1 } : p
       );
@@ -228,7 +233,7 @@ const AddServiceRecord = () => {
           : p
       ));
     } else {
-      alert("Cannot add more of this part. Stock limit reached.");
+      showNotification("Cannot add more of this part. Stock limit reached.", "error");
     }
   };
 
@@ -275,10 +280,11 @@ const AddServiceRecord = () => {
       for (const part of serviceRecord.parts_used) {
         await updatePartCount(part.id, -part.quantity);
       }
-
+      showNotification("Service record added successfully!", "success");
       navigate(`/vehicles/${id}`);
     } catch (error) {
       console.error("Error adding new service record: ", error);
+      showNotification(`Error adding service record: ${error.message}`, "error");
       // If there's an error, restore the parts to inventory locally
       restorePartsToInventory();
     }

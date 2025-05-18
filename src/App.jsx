@@ -3,6 +3,8 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { PartsProvider } from './context/PartsContext'; // Import the PartsProvider
+import { NotificationProvider, useNotification } from './contexts/NotificationContext'; // Added
+import NotificationBar from './components/NotificationBar'; // Added
 import Header from './components/Header';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
@@ -42,6 +44,7 @@ const PrivateRoute = ({ children }) => {
 function AppContent() {
   const { theme } = useTheme();
   const { currentUser, loading } = useAuth();
+  const { notification, hideNotification } = useNotification(); // Added
 
   if (loading) {
     return <div>Loading...</div>;
@@ -50,6 +53,11 @@ function AppContent() {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+        <NotificationBar 
+          message={notification.message} 
+          type={notification.type} 
+          onClose={hideNotification} 
+        /> {/* Added */}
         <Header />
         <main className="container mx-auto px-4 py-8 grid">
           <Routes>
@@ -88,11 +96,13 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <PartsProvider> {/* Wrap the application with PartsProvider */}
-          <Router>
-            <AppContent />
-          </Router>
-        </PartsProvider>
+        <NotificationProvider> {/* Added */}
+          <PartsProvider> {/* Wrap the application with PartsProvider */}
+            <Router>
+              <AppContent />
+            </Router>
+          </PartsProvider>
+        </NotificationProvider> {/* Added */}
       </ThemeProvider>
     </AuthProvider>
   );

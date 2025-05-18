@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, setDoc, deleteDoc, getDoc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useNotification } from '../contexts/NotificationContext';
 
 const ManageVehicleChecklists = () => {
+  const { showNotification } = useNotification();
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState('');
@@ -61,39 +63,71 @@ const ManageVehicleChecklists = () => {
   };
 
   const handleAddTask = async () => {
-    if (newTask.trim()) {
-      const updatedChecklist = [...checklist, newTask.trim()];
-      setChecklist(updatedChecklist);
-      await updateChecklistInFirestore(updatedChecklist);
-      setNewTask('');
+    if (newTask.trim() && selectedVehicleId && selectedServiceType) {
+      try {
+        const updatedChecklist = [...checklist, newTask.trim()];
+        await updateChecklistInFirestore(updatedChecklist, serviceInterval);
+        setChecklist(updatedChecklist);
+        setNewTask('');
+        showNotification("Task added to checklist.", "success");
+      } catch (error) {
+        console.error("Error adding task:", error);
+        showNotification("Failed to add task.", "error");
+      }
     }
   };
 
   const handleRemoveTask = async (index) => {
-    const updatedChecklist = checklist.filter((_, i) => i !== index);
-    setChecklist(updatedChecklist);
-    await updateChecklistInFirestore(updatedChecklist);
+    if (selectedVehicleId && selectedServiceType) {
+      try {
+        const updatedChecklist = checklist.filter((_, i) => i !== index);
+        await updateChecklistInFirestore(updatedChecklist, serviceInterval);
+        setChecklist(updatedChecklist);
+        showNotification("Task removed from checklist.", "success");
+      } catch (error) {
+        console.error("Error removing task:", error);
+        showNotification("Failed to remove task.", "error");
+      }
+    }
   };
 
-  const updateChecklistInFirestore = async (updatedChecklist) => {
+  const updateChecklistInFirestore = async (tasksToUpdate, intervalToUpdate) => {
+    if (!selectedVehicleId || !selectedServiceType) {
+      console.warn("Attempted to update checklist without selected vehicle/type");
+      return;
+    }
     await setDoc(doc(db, 'vehicleChecklists', `${selectedVehicleId}_${selectedServiceType}`), {
-      tasks: updatedChecklist,
-      interval: serviceInterval
+      tasks: tasksToUpdate,
+      interval: intervalToUpdate
     });
   };
 
   const handleIntervalChange = async (e) => {
     const newInterval = e.target.value;
     setServiceInterval(newInterval);
-    await updateChecklistInFirestore(checklist);
+    if (selectedVehicleId && selectedServiceType) {
+      try {
+        await updateChecklistInFirestore(checklist, newInterval);
+        showNotification("Service interval updated.", "success");
+      } catch (error) {
+        console.error("Error updating service interval:", error);
+        showNotification("Failed to update service interval.", "error");
+      }
+    }
   };
 
   const handleCreateNewChecklist = async () => {
     if (selectedVehicleId && selectedServiceType) {
-      await updateChecklistInFirestore([]);
-      setIsCreatingNewChecklist(false);
-      setChecklist([]);
-      setServiceInterval('');
+      try {
+        await updateChecklistInFirestore([], '');
+        setChecklist([]);
+        setServiceInterval('');
+        setIsCreatingNewChecklist(false);
+        showNotification("New empty checklist created.", "success");
+      } catch (error) {
+        console.error("Error creating new checklist:", error);
+        showNotification("Failed to create new checklist.", "error");
+      }
     }
   };
 
@@ -103,21 +137,34 @@ const ManageVehicleChecklists = () => {
       const vehicleDoc = await getDoc(vehicleRef);
       if (vehicleDoc.exists()) {
         const currentServiceTypes = vehicleDoc.data().serviceTypes || [];
-        if (!currentServiceTypes.includes(newServiceType.trim())) {
-          await updateDoc(vehicleRef, {
-            serviceTypes: [...currentServiceTypes, newServiceType.trim()]
-          });
-          setVehicles(prevVehicles => 
-            prevVehicles.map(v => 
-              v.id === selectedVehicleId 
-                ? { ...v, serviceTypes: [...v.serviceTypes, newServiceType.trim()] }
-                : v
-            )
-          );
-          setSelectedServiceType(newServiceType.trim());
-          setNewServiceType('');
-          setIsCreatingNewChecklist(true);
+        const trimmedNewServiceType = newServiceType.trim();
+        if (!currentServiceTypes.includes(trimmedNewServiceType)) {
+          try {
+            await updateDoc(vehicleRef, {
+              serviceTypes: [...currentServiceTypes, trimmedNewServiceType]
+            });
+            setVehicles(prevVehicles => 
+              prevVehicles.map(v => 
+                v.id === selectedVehicleId 
+                  ? { ...v, serviceTypes: [...(v.serviceTypes || []), trimmedNewServiceType] } 
+                  : v
+              )
+            );
+            setSelectedServiceType(trimmedNewServiceType);
+            setNewServiceType('');
+            setChecklist([]);
+            setServiceInterval('');
+            setIsCreatingNewChecklist(true);
+            showNotification(`Service type "${trimmedNewServiceType}" added. You can now create its checklist.`, "success");
+          } catch (error) {
+            console.error("Error adding new service type:", error);
+            showNotification(`Failed to add service type: ${error.message}`, "error");
+          }
+        } else {
+          showNotification(`Service type "${trimmedNewServiceType}" already exists for this vehicle.`, "error");
         }
+      } else {
+        showNotification("Vehicle not found. Cannot add service type.", "error");
       }
     }
   };
@@ -130,29 +177,31 @@ const ManageVehicleChecklists = () => {
       const vehicleDoc = await getDoc(vehicleRef);
 
       if (vehicleDoc.exists()) {
-        const currentServiceTypes = vehicleDoc.data().serviceTypes || [];
-        const updatedServiceTypes = currentServiceTypes.filter(type => type !== selectedServiceType);
-
-        await updateDoc(vehicleRef, {
-          serviceTypes: updatedServiceTypes
-        });
-
-        setVehicles(prevVehicles =>
-          prevVehicles.map(v =>
-            v.id === selectedVehicleId
-              ? { ...v, serviceTypes: updatedServiceTypes }
-              : v
-          )
-        );
-        
-        // Reset related state
-        setSelectedServiceType('');
-        setChecklist([]);
-        setServiceInterval('');
-        setIsCreatingNewChecklist(false);
+        try {
+          const currentServiceTypes = vehicleDoc.data().serviceTypes || [];
+          const updatedServiceTypes = currentServiceTypes.filter(type => type !== selectedServiceType);
+          await updateDoc(vehicleRef, {
+            serviceTypes: updatedServiceTypes
+          });
+          setVehicles(prevVehicles =>
+            prevVehicles.map(v =>
+              v.id === selectedVehicleId
+                ? { ...v, serviceTypes: updatedServiceTypes }
+                : v
+            )
+          );
+          showNotification(`Service type "${selectedServiceType}" removed.`, "success");
+          setSelectedServiceType('');
+          setChecklist([]);
+          setServiceInterval('');
+          setIsCreatingNewChecklist(false);
+        } catch (error) {
+          console.error("Error removing service type:", error);
+          showNotification(`Failed to remove service type: ${error.message}`, "error");
+        }
       } else {
         console.error("Vehicle not found for removing service type.");
-        alert("Error: Vehicle not found.");
+        showNotification("Error: Vehicle not found.", "error");
       }
     }
   };

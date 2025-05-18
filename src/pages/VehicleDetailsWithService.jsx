@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord } from '../firebaseOperations';
 import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint } from 'react-icons/fa';
 import ServiceReport from '../components/ServiceReport';
+import { useNotification } from '../contexts/NotificationContext';
 
 const VehicleDetailsWithService = () => {
+  const { showNotification } = useNotification();
   const { id } = useParams();
   const [vehicle, setVehicle] = useState(null);
   const [serviceRecords, setServiceRecords] = useState([]);
@@ -53,9 +55,10 @@ const VehicleDetailsWithService = () => {
       try {
         await deleteServiceRecord(recordId);
         setServiceRecords(serviceRecords.filter(record => record.id !== recordId));
+        showNotification('Service record deleted successfully!', 'success');
       } catch (error) {
         console.error("Error deleting service record:", error);
-        alert('Failed to delete service record. Please try again.');
+        showNotification('Failed to delete service record. Please try again.', 'error');
       }
     }
   };
@@ -67,9 +70,10 @@ const VehicleDetailsWithService = () => {
         record.id === updatedRecord.id ? updatedRecord : record
       ));
       setEditingRecord(null);
+      showNotification('Service record updated successfully!', 'success');
     } catch (error) {
       console.error("Error updating service record:", error);
-      alert('Failed to update service record. Please try again.');
+      showNotification('Failed to update service record. Please try again.', 'error');
     }
   };
 
