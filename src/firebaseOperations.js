@@ -48,7 +48,8 @@ const readDocument = async (collectionName, documentId) => {
 
 const updateDocument = async (collectionName, documentId, data) => {
   try {
-    const docRef = doc(collectionsMap[collectionName], documentId);
+    const path = `${collectionName}/${documentId}`;
+    const docRef = doc(db, path);
     await updateDoc(docRef, data);
     console.log(`Document updated in ${collectionName} with ID: ${documentId}`);
   } catch (error) {

@@ -26,6 +26,7 @@ const Parts = () => {
   const [selectedInvoiceUrl, setSelectedInvoiceUrl] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [vehicleId, setVehicleId] = useState('');
+  const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
 
   const location = useLocation();
 
@@ -69,8 +70,16 @@ const Parts = () => {
         setSuppliers(suppliersData);
         setLocations(locationsData);
 
-        const uniqueCategories = [...new Set(partsData.map(part => part.category))];
+        const uniqueCategories = [...new Set(partsData.map(part => part.category))].sort((a,b) => a.localeCompare(b));
         setCategories(['all', 'low_stock', ...uniqueCategories]);
+
+        // Sort vehicles for the dropdown
+        const sortedVehicles = [...vehiclesData].sort((a, b) => {
+          const vehicleA = `${a.make} ${a.model} (${a.license_plate})`.toLowerCase();
+          const vehicleB = `${b.make} ${b.model} (${b.license_plate})`.toLowerCase();
+          return vehicleA.localeCompare(vehicleB);
+        });
+        setVehicles(sortedVehicles);
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -124,7 +133,8 @@ const Parts = () => {
   const filteredParts = parts.filter(part => 
     (part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase()) ||
     part.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (!selectedVehicle || part.vehicle_id === selectedVehicle)
+    (!selectedVehicle || part.vehicle_id === selectedVehicle) &&
+    (!showUnassignedOnly || !part.location_id)
   );
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
@@ -188,6 +198,18 @@ const Parts = () => {
             </option>
           ))}
         </select>
+        <div className="flex items-center ml-4">
+          <input
+            type="checkbox"
+            id="showUnassignedPartsOnly"
+            checked={showUnassignedOnly}
+            onChange={(e) => setShowUnassignedOnly(e.target.checked)}
+            className="mr-2 h-4 w-4 bg-white rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:checked:bg-blue-500 dark:checked:border-transparent"
+          />
+          <label htmlFor="showUnassignedPartsOnly" className="text-sm text-gray-700 dark:text-gray-300">
+            Show unassigned only
+          </label>
+        </div>
       </div>
 
       <table className="w-full bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
