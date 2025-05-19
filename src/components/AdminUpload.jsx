@@ -31,7 +31,6 @@ const AdminUpload = () => {
     const headerMapping = {
       'location': 'location_id',
       'next_maintenance_date': 'next_maintenance_due',
-      'asset_tag': 'tool_id'
     };
 
     const headers = rawHeaders.map(header => headerMapping[header] || header);
