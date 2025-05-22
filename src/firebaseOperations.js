@@ -673,3 +673,26 @@ export const getEpicDetails = async (projectId, epicId) => {
     throw error;
   }
 };
+
+// Parts To Order CRUD operations
+const partsToOrderCollection = collection(db, 'partsToOrder');
+
+export const getAllPartsToOrder = async () => {
+  const snapshot = await getDocs(partsToOrderCollection);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const addPartToOrder = async (partOrderData) => {
+  const docRef = await addDoc(partsToOrderCollection, partOrderData);
+  return docRef.id;
+};
+
+export const updatePartToOrder = async (id, updatedData) => {
+  const partOrderDoc = doc(db, 'partsToOrder', id);
+  await updateDoc(partOrderDoc, updatedData);
+};
+
+export const deletePartToOrder = async (id) => {
+  const partOrderDoc = doc(db, 'partsToOrder', id);
+  await deleteDoc(partOrderDoc);
+};

@@ -33,6 +33,7 @@ const Header = () => {
                 <Link to="/projects" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Projects</Link>
                 <Link to="/vehicles" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Vehicles</Link>
                 <Link to="/parts" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Parts</Link>
+                <Link to="/parts-to-order" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Parts to Order</Link>
                 <Link to="/tools" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Tools</Link>
                 <Link to="/suppliers" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Suppliers</Link>
                 <Link to="/locations" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Locations</Link>

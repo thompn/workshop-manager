@@ -11,6 +11,7 @@ import Projects from './pages/Projects';
 import Vehicles from './pages/Vehicles';
 import Parts from './pages/Parts';
 import Tools from './pages/Tools';
+import PartsToOrder from './pages/PartsToOrder'; // Import the new page
 import { FaWrench } from 'react-icons/fa';
 import ProjectDetails from './pages/ProjectDetails';
 import VehicleDetails from './pages/VehicleDetails';
@@ -73,6 +74,7 @@ function AppContent() {
             <Route path="/vehicles/manage" element={<PrivateRoute><ManageVehicles /></PrivateRoute>} />
             <Route path="/parts" element={<PrivateRoute><Parts /></PrivateRoute>} />
             <Route path="/parts/manage" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
+            <Route path="/parts-to-order" element={<PrivateRoute><PartsToOrder /></PrivateRoute>} />
             <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
             <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
