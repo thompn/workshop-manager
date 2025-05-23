@@ -30,7 +30,7 @@ const Header = () => {
           <div className="flex items-center">
             {currentUser ? (
               <>
-                <Link to="/projects" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Projects</Link>
+                <Link to="/todo" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">To-Do</Link>
                 <Link to="/vehicles" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Vehicles</Link>
                 <Link to="/parts" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Parts</Link>
                 <Link to="/tools" className="mx-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Tools</Link>

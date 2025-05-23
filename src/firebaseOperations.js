@@ -331,13 +331,34 @@ export const serviceTaskStructure = {
 };
 
 // Add these functions after the existing CRUD operations
-export const addNewServiceRecord = async (data) => {
+export const addNewServiceRecord = async (serviceData, linkedTaskIds = []) => {
   try {
-    const newDocRef = doc(collectionsMap.service_records);
-    await setDoc(newDocRef, { ...data, id: newDocRef.id });
-    return newDocRef.id;
+    const docRef = await addDoc(collection(db, 'service_records'), serviceData);
+    console.log("Service record added with ID: ", docRef.id);
+
+    // If linkedTaskIds are provided, update those tasks
+    if (linkedTaskIds && linkedTaskIds.length > 0) {
+      const vehicleId = serviceData.vehicle_id; // Get vehicleId from serviceData
+      if (!vehicleId) {
+        console.warn('Vehicle ID not found in service data, cannot update linked tasks.');
+        return docRef.id; // Still return the service record ID
+      }
+      for (const taskId of linkedTaskIds) {
+        try {
+          await updateTask(vehicleId, taskId, { 
+            status: 'Done', 
+            serviceRecordId: docRef.id // Link task to this new service record
+          });
+          console.log(`Task ${taskId} for vehicle ${vehicleId} updated to Done and linked to service record ${docRef.id}`);
+        } catch (taskUpdateError) {
+          console.error(`Failed to update task ${taskId} for vehicle ${vehicleId}:`, taskUpdateError);
+          // Continue trying to update other tasks even if one fails
+        }
+      }
+    }
+    return docRef.id;
   } catch (error) {
-    console.error("Error adding new service record: ", error);
+    console.error("Error adding service record: ", error);
     throw error;
   }
 };
@@ -541,41 +562,131 @@ export const getAllProjects = async () => {
 };
 
 // Task operations
-export const addTask = async (projectId, taskData) => {
+export const addTask = async (vehicleId, taskData) => {
+  if (!vehicleId) {
+    console.error("Vehicle ID is required to add a task.");
+    throw new Error("Vehicle ID is required.");
+  }
   try {
-    const docRef = await addDoc(collection(db, "projects", projectId, "tasks"), taskData);
-    return docRef.id;
+    // Construct the path to the 'tasks' subcollection for the given vehicle
+    const tasksCollectionRef = collection(db, 'vehicles', vehicleId, 'tasks');
+    const docRef = await addDoc(tasksCollectionRef, taskData);
+    console.log(`Task added with ID: ${docRef.id} to vehicle ${vehicleId}`);
+    return { id: docRef.id, ...taskData }; // Return the newly created task with its ID
   } catch (error) {
-    console.error("Error adding task: ", error);
+    console.error(`Error adding task to vehicle ${vehicleId}:`, error);
     throw error;
   }
 };
 
-export const updateTask = async (projectId, taskId, taskData) => {
+export const updateTask = async (vehicleId, taskId, taskData) => {
+  if (!vehicleId || !taskId) {
+    console.error("Vehicle ID and Task ID are required to update a task.");
+    throw new Error("Vehicle ID and Task ID are required.");
+  }
   try {
-    const taskRef = doc(db, "projects", projectId, "tasks", taskId);
+    const taskRef = doc(db, 'vehicles', vehicleId, 'tasks', taskId);
     await updateDoc(taskRef, taskData);
+    console.log(`Task ${taskId} for vehicle ${vehicleId} updated successfully.`);
   } catch (error) {
-    console.error("Error updating task: ", error);
+    console.error(`Error updating task ${taskId} for vehicle ${vehicleId}:`, error);
     throw error;
   }
 };
 
-export const deleteTask = async (projectId, taskId) => {
+export const deleteTask = async (vehicleId, taskId) => {
+  if (!vehicleId || !taskId) {
+    console.error("Vehicle ID and Task ID are required to delete a task.");
+    throw new Error("Vehicle ID and Task ID are required.");
+  }
   try {
-    await deleteDoc(doc(db, "projects", projectId, "tasks", taskId));
+    const taskRef = doc(db, 'vehicles', vehicleId, 'tasks', taskId);
+    await deleteDoc(taskRef);
+    console.log(`Task deleted with ID: ${taskId} from vehicle ${vehicleId}`);
   } catch (error) {
-    console.error("Error deleting task: ", error);
+    console.error(`Error deleting task ${taskId} from vehicle ${vehicleId}:`, error);
     throw error;
   }
 };
 
-export const getProjectTasks = async (projectId) => {
+export const getVehicleTasks = async (vehicleId) => {
+  if (!vehicleId) {
+    console.error("Vehicle ID is required to get tasks.");
+    return []; // Or throw error, depending on desired handling
+  }
   try {
-    const querySnapshot = await getDocs(collection(db, "projects", projectId, "tasks"));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const tasksCollectionRef = collection(db, 'vehicles', vehicleId, 'tasks');
+    const querySnapshot = await getDocs(tasksCollectionRef);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), vehicleId: vehicleId })); // Add vehicleId to task data
   } catch (error) {
-    console.error("Error getting project tasks: ", error);
+    console.error(`Error getting tasks for vehicle ${vehicleId}:`, error);
+    throw error;
+  }
+};
+
+// New function to get recent tasks across all vehicles
+export const getRecentTasks = async (limitCount = 5) => {
+  try {
+    const allVehicles = await getAllVehicles();
+    let allTasks = [];
+    for (const vehicle of allVehicles) {
+      const tasks = await getVehicleTasks(vehicle.id);
+      // Add vehicle information to each task for context on the home page
+      const tasksWithVehicleInfo = tasks.map(task => ({ 
+        ...task, 
+        vehicleId: vehicle.id, 
+        vehicleMake: vehicle.make,
+        vehicleModel: vehicle.model,
+        vehicleYear: vehicle.year,
+        vehicleLicensePlate: vehicle.license_plate
+      }));
+      allTasks = [...allTasks, ...tasksWithVehicleInfo];
+    }
+
+    // Sort all tasks by dateAdded descending
+    allTasks.sort((a, b) => {
+      const dateA = a.dateAdded?.toDate ? a.dateAdded.toDate() : new Date(0); // Handle null or missing dateAdded
+      const dateB = b.dateAdded?.toDate ? b.dateAdded.toDate() : new Date(0);
+      return dateB - dateA;
+    });
+
+    return allTasks.slice(0, limitCount);
+  } catch (error) {
+    console.error("Error getting recent tasks:", error);
+    throw error;
+  }
+};
+
+// Function to get all tasks across all vehicles
+export const getAllTasksAcrossVehicles = async () => {
+  try {
+    const allVehicles = await getAllVehicles();
+    let allTasks = [];
+    for (const vehicle of allVehicles) {
+      // Assuming getVehicleTasks already adds vehicleId to each task object
+      const tasks = await getVehicleTasks(vehicle.id); 
+      const tasksWithVehicleInfo = tasks.map(task => ({ 
+        ...task, 
+        // vehicleId is already added by getVehicleTasks as per previous change
+        vehicleMake: vehicle.make,
+        vehicleModel: vehicle.model,
+        vehicleYear: vehicle.year,
+        vehicleLicensePlate: vehicle.license_plate,
+        vehicleVin: vehicle.vin // Adding VIN for more robust vehicle identification
+      }));
+      allTasks = [...allTasks, ...tasksWithVehicleInfo];
+    }
+
+    // Sort all tasks by dateAdded descending by default
+    allTasks.sort((a, b) => {
+      const dateA = a.dateAdded?.toDate ? a.dateAdded.toDate() : new Date(0);
+      const dateB = b.dateAdded?.toDate ? b.dateAdded.toDate() : new Date(0);
+      return dateB - dateA;
+    });
+
+    return allTasks;
+  } catch (error) {
+    console.error("Error getting all tasks across vehicles:", error);
     throw error;
   }
 };
@@ -672,4 +783,27 @@ export const getEpicDetails = async (projectId, epicId) => {
     console.error("Error getting epic details: ", error);
     throw error;
   }
+};
+
+// Parts To Order CRUD operations
+const partsToOrderCollection = collection(db, 'partsToOrder');
+
+export const getAllPartsToOrder = async () => {
+  const snapshot = await getDocs(partsToOrderCollection);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const addPartToOrder = async (partOrderData) => {
+  const docRef = await addDoc(partsToOrderCollection, partOrderData);
+  return docRef.id;
+};
+
+export const updatePartToOrder = async (id, updatedData) => {
+  const partOrderDoc = doc(db, 'partsToOrder', id);
+  await updateDoc(partOrderDoc, updatedData);
+};
+
+export const deletePartToOrder = async (id) => {
+  const partOrderDoc = doc(db, 'partsToOrder', id);
+  await deleteDoc(partOrderDoc);
 };

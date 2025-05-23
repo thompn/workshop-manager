@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { addNewServiceRecord, getAllServiceTasks, getVehicle, getAllParts, getVehicleChecklist, updatePartCount } from '../firebaseOperations';
+import { addNewServiceRecord, getAllServiceTasks, getVehicle, getAllParts, getVehicleChecklist, updatePartCount, getVehicleTasks } from '../firebaseOperations';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import VehicleServiceChecklist from '../components/VehicleServiceChecklist';
@@ -39,6 +39,17 @@ const AddServiceRecord = () => {
   const [vehicleChecklist, setVehicleChecklist] = useState([]);
   const { setUpdateParts } = useParts();
 
+  const [openTasks, setOpenTasks] = useState([]);
+  const [selectedLinkedTaskIds, setSelectedLinkedTaskIds] = useState([]);
+
+  const handleLinkedTaskChange = (taskId) => {
+    setSelectedLinkedTaskIds(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId) 
+        : [...prev, taskId]
+    );
+  };
+
   const fetchVehicleChecklist = async (vehicleId, serviceType) => {
     try {
       const docRef = doc(db, 'vehicleChecklists', `${vehicleId}_${serviceType}`);
@@ -55,8 +66,9 @@ const AddServiceRecord = () => {
     }
   };
 
-  const fetchVehicleAndServiceTasks = async () => {
+  const fetchInitialData = async () => {
     try {
+      setLoading(true);
       const vehicleData = await getVehicle(id);
       setVehicle(vehicleData);
       if (vehicleData && vehicleData.serviceTypes) {
@@ -68,9 +80,18 @@ const AddServiceRecord = () => {
 
       const serviceTasksData = await getAllServiceTasks();
       setServiceTasks(serviceTasksData);
+
+      if (id) {
+        const allVehicleTasks = await getVehicleTasks(id);
+        const openVehicleTasks = allVehicleTasks.filter(
+          task => task.status === 'To Do' || task.status === 'In Progress'
+        );
+        setOpenTasks(openVehicleTasks);
+      }
+
     } catch (err) {
-      console.error("Error fetching vehicle and service tasks:", err);
-      setError("Failed to fetch vehicle details and service tasks. Please try again later.");
+      console.error("Error fetching initial data:", err);
+      setError("Failed to fetch initial data. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -100,7 +121,7 @@ const AddServiceRecord = () => {
   }, [serviceRecord.parts_used]);
 
   useEffect(() => {
-    fetchVehicleAndServiceTasks();
+    fetchInitialData();
     fetchParts();
 
     return () => {
@@ -261,38 +282,48 @@ const AddServiceRecord = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const newServiceRecordId = await addNewServiceRecord({
-        ...serviceRecord,
-        vehicle_id: id,
-        service_date: new Date(serviceRecord.service_date).toISOString(),
-        parts_used: serviceRecord.parts_used.map(part => ({
-          id: part.id,
-          part_number_oem: part.part_number_oem,
-          description: part.description,
-          cost: part.cost,
-          quantity: part.quantity
-        }))
-      });
-      console.log("New service record added with ID: ", newServiceRecordId);
+    if (!serviceRecord.service_date || !serviceRecord.technician) {
+      showNotification("Please fill in all required fields (Service Date, Technician).", "error");
+      return;
+    }
 
-      // Update the actual database stock levels
-      for (const part of serviceRecord.parts_used) {
-        await updatePartCount(part.id, -part.quantity);
+    setLoading(true);
+    try {
+      // First, update part counts in the main inventory for parts used
+      for (const partUsed of serviceRecord.parts_used) {
+        await updatePartCount(partUsed.id, -partUsed.quantity);
       }
-      showNotification("Service record added successfully!", "success");
+      
+      // Then, add the service record, passing the linked task IDs
+      const newServiceRecordId = await addNewServiceRecord(
+        { ...serviceRecord, cost: parseFloat(serviceRecord.cost || 0) },
+        selectedLinkedTaskIds // Pass the selected task IDs
+      );
+      
+      setUpdateParts(true); // Trigger parts list update in context
+      showNotification("Service record added successfully! Tasks updated.", "success");
       navigate(`/vehicles/${id}`);
-    } catch (error) {
-      console.error("Error adding new service record: ", error);
-      showNotification(`Error adding service record: ${error.message}`, "error");
-      // If there's an error, restore the parts to inventory locally
-      restorePartsToInventory();
+    } catch (err) {
+      console.error("Error submitting service record:", err);
+      showNotification(`Error submitting service record: ${err.message}`, "error");
+      // If service record submission fails, ideally roll back part count changes.
+      // For now, we log and notify. Consider a more robust rollback mechanism.
+      try {
+        for (const partUsed of serviceRecord.parts_used) {
+          await updatePartCount(partUsed.id, partUsed.quantity); // Attempt to restore count
+        }
+        showNotification("Attempted to restore part counts after submission error.", "warning");
+      } catch (rollbackError) {
+        console.error("Error rolling back part counts:", rollbackError);
+        showNotification("Critical error: Failed to roll back part counts after submission error. Manual check required.", "error");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading && !vehicle) return <div className="text-center py-10">Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!vehicle) return <div>Vehicle not found</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -474,6 +505,39 @@ const AddServiceRecord = () => {
             ))}
           </ul>
         </div>
+
+        {/* Link To-Do Items Section */}
+        {openTasks.length > 0 && (
+          <div className="mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-300">Link to Open To-Do Items</h3>
+            <div className="space-y-2">
+              {openTasks.map(task => (
+                <label key={task.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <input 
+                    type="checkbox"
+                    value={task.id}
+                    checked={selectedLinkedTaskIds.includes(task.id)}
+                    onChange={() => handleLinkedTaskChange(task.id)}
+                    className="form-checkbox h-5 w-5 text-indigo-600 border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:checked:bg-indigo-500 rounded focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{task.name} ({task.status})</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+        {loading && openTasks.length === 0 && (
+             <div className="mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-300">Link to Open To-Do Items</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading To-Do items...</p>
+            </div>
+        )}
+        {!loading && openTasks.length === 0 && vehicle && (
+            <div className="mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-300">Link to Open To-Do Items</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No open To-Do items found for this vehicle.</p>
+            </div>
+        )}
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" htmlFor="notes">
