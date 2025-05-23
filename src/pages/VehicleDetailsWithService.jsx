@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord } from '../firebaseOperations';
-import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint } from 'react-icons/fa';
+import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks } from '../firebaseOperations';
+import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools } from 'react-icons/fa';
 import ServiceReport from '../components/ServiceReport';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -10,15 +10,18 @@ const VehicleDetailsWithService = () => {
   const { id } = useParams();
   const [vehicle, setVehicle] = useState(null);
   const [serviceRecords, setServiceRecords] = useState([]);
+  const [vehicleTasks, setVehicleTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedRecord, setExpandedRecord] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
   const [selectedServiceRecord, setSelectedServiceRecord] = useState(null);
+  const [expandedTask, setExpandedTask] = useState(null);
 
   useEffect(() => {
-    const fetchVehicleAndServiceRecords = async () => {
+    const fetchVehicleData = async () => {
       try {
+        setLoading(true);
         const vehicleData = await getVehicle(id);
         if (!vehicleData) {
           throw new Error("Vehicle not found");
@@ -27,20 +30,28 @@ const VehicleDetailsWithService = () => {
 
         const serviceRecordsData = await getServiceRecordsByVehicle(id);
         setServiceRecords(serviceRecordsData);
+
+        const tasksData = await getVehicleTasks(id);
+        setVehicleTasks(tasksData);
+
       } catch (err) {
-        console.error("Error fetching vehicle and service records:", err);
-        setError(err.message || "Failed to fetch vehicle details and service records. Please try again later.");
+        console.error("Error fetching vehicle data:", err);
+        setError(err.message || "Failed to fetch vehicle details. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVehicleAndServiceRecords();
+    fetchVehicleData();
   }, [id]);
 
   const toggleExpandRecord = (recordId) => {
     setExpandedRecord(expandedRecord === recordId ? null : recordId);
     setEditingRecord(null);
+  };
+
+  const toggleExpandTask = (taskId) => {
+    setExpandedTask(expandedTask === taskId ? null : taskId);
   };
 
   const handleEditClick = (e, record) => {
@@ -222,9 +233,64 @@ const VehicleDetailsWithService = () => {
         )}
       </div>
 
-      <div className="flex justify-between">
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
+        <h2 className="text-2xl font-semibold mb-4 flex items-center">
+          <FaTasks className="mr-3 text-indigo-500" /> To-Do Tasks for this Vehicle
+        </h2>
+        {vehicleTasks.length === 0 ? (
+          <p className="text-gray-600 dark:text-gray-400">No tasks found for this vehicle.</p>
+        ) : (
+          <div className="space-y-4">
+            {vehicleTasks.map((task) => (
+              <div key={task.id} className="border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div 
+                  className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 flex justify-between items-center"
+                  onClick={() => toggleExpandTask(task.id)}
+                >
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-800 dark:text-white">{task.name}</h3>
+                    <p className={`text-sm font-semibold ${task.status === 'Done' ? 'text-green-500' : task.status === 'In Progress' ? 'text-yellow-500' : 'text-blue-500'}`}>
+                      Status: {task.status}
+                    </p>
+                  </div>
+                  {expandedTask === task.id ? <FaChevronUp /> : <FaChevronDown />}
+                </div>
+                {expandedTask === task.id && (
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      <strong>Description:</strong> {task.description || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                      <strong>Date Added:</strong> {task.dateAdded?.toDate ? new Date(task.dateAdded.toDate()).toLocaleDateString() : 'N/A'}
+                    </p>
+                    {task.linkedParts && task.linkedParts.length > 0 && (
+                      <div>
+                        <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200 mb-2 flex items-center">
+                          <FaTools className="mr-2 text-gray-500" /> Linked Parts:
+                        </h4>
+                        <ul className="list-disc list-inside pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                          {task.linkedParts.map((part, index) => (
+                            <li key={`${part.partId}-${index}`}>
+                              {part.description || part.partNumber} (Qty: {part.quantityRequired})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-between mt-8">
         <Link to={`/vehicles/${id}/add-service`} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
           Add Service Record
+        </Link>
+        <Link to={`/parts?vehicleId=${id}`} className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded">
+          View Parts for this Vehicle
         </Link>
         <Link to="/vehicles" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
           Back to Vehicles
@@ -233,7 +299,7 @@ const VehicleDetailsWithService = () => {
 
       {selectedServiceRecord && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div className="mt-3 text-center">
               <ServiceReport vehicle={vehicle} serviceRecord={selectedServiceRecord} />
               <div className="items-center px-4 py-3">

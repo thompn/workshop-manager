@@ -7,17 +7,12 @@ import { NotificationProvider, useNotification } from './contexts/NotificationCo
 import NotificationBar from './components/NotificationBar'; // Added
 import Header from './components/Header';
 import Home from './pages/Home';
-import Projects from './pages/Projects';
 import Vehicles from './pages/Vehicles';
-import Parts from './pages/Parts';
 import Tools from './pages/Tools';
-import PartsToOrder from './pages/PartsToOrder'; // Import the new page
 import { FaWrench } from 'react-icons/fa';
-import ProjectDetails from './pages/ProjectDetails';
 import VehicleDetails from './pages/VehicleDetails';
 import ManageTools from './pages/ManageTools';
 import ManageParts from './pages/ManageParts';
-import ManageProjects from './pages/ManageProjects';
 import ManageVehicles from './pages/ManageVehicles';
 import VehicleDetailsWithService from './pages/VehicleDetailsWithService';
 import AddServiceRecord from './pages/AddServiceRecord';
@@ -30,6 +25,7 @@ import ManageVehicleChecklists from './pages/ManageVehicleChecklists';
 import EpicDetails from './pages/EpicDetails';
 import AdminUpload from './components/AdminUpload';
 import ManageSuppliers from './pages/ManageSuppliers';
+import ToDoPage from './pages/ToDoPage'; // Import the new ToDoPage
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -65,26 +61,21 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-            <Route path="/projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
-            <Route path="/projects/:id" element={<PrivateRoute><ProjectDetails /></PrivateRoute>} />
-            <Route path="/projects/manage" element={<PrivateRoute><ManageProjects /></PrivateRoute>} />
+            <Route path="/todo" element={<PrivateRoute><ToDoPage /></PrivateRoute>} />
             <Route path="/vehicles" element={<PrivateRoute><Vehicles /></PrivateRoute>} />
             <Route path="/vehicles/:id" element={<PrivateRoute><VehicleDetailsWithService /></PrivateRoute>} />
             <Route path="/vehicles/:id/add-service" element={<PrivateRoute><AddServiceRecord /></PrivateRoute>} />
             <Route path="/vehicles/manage" element={<PrivateRoute><ManageVehicles /></PrivateRoute>} />
-            <Route path="/parts" element={<PrivateRoute><Parts /></PrivateRoute>} />
+            <Route path="/parts" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
             <Route path="/parts/manage" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
-            <Route path="/parts-to-order" element={<PrivateRoute><PartsToOrder /></PrivateRoute>} />
             <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
             <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
             <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />
             <Route path="/manage-checklists" element={<ManageVehicleChecklists />} />
-            <Route path="/projects/:projectId/epics/:epicId" element={<EpicDetails />} />
             <Route path="/admin/upload" element={<PrivateRoute><AdminUpload /></PrivateRoute>} />
             <Route path="/suppliers/manage" element={<PrivateRoute><ManageSuppliers /></PrivateRoute>} />
-            <Route path="/parts" element={<ManageParts />} />
             <Route path="/suppliers" element={<ManageSuppliers />} />
             <Route path="/locations" element={<ManageLocations />} />
           </Routes>
