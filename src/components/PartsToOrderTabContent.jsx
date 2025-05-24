@@ -53,6 +53,8 @@ const PartsToOrderTabContent = () => {
   const [mainInventoryCategories, setMainInventoryCategories] = useState([]);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
+  const [editingStatusPartId, setEditingStatusPartId] = useState(null);
+
   const initialNewMainInventoryPartDataState = {
     part_number_oem: '',
     part_number_vendor: '',
@@ -1025,7 +1027,47 @@ const PartsToOrderTabContent = () => {
                 </div>
                 <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
                   <p><strong>Qty:</strong> {partOrder.quantity}</p>
-                  <p><strong>Status:</strong> <span className={`font-semibold ${partOrder.status === 'Received' ? 'text-green-600 dark:text-green-400' : partOrder.status === 'Ordered' ? 'text-blue-600 dark:text-blue-400' : ''}`}>{partOrder.status}</span></p>
+                  {editingStatusPartId === partOrder.id ? (
+                    <div className="flex items-center">
+                      <strong className="mr-1">Status:</strong>
+                      <select
+                        value={partOrder.status}
+                        onChange={(e) => {
+                          const newStatus = e.target.value;
+                          updatePartToOrderMutation.mutate({
+                            id: partOrder.id,
+                            payload: { status: newStatus }
+                          });
+                          setEditingStatusPartId(null);
+                        }}
+                        onBlur={() => setEditingStatusPartId(null)}
+                        className="py-0.5 px-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-gray-100"
+                        autoFocus
+                      >
+                        {STATUS_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <p>
+                      <strong>Status:</strong>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingStatusPartId(partOrder.id);
+                        }}
+                        className={`font-semibold cursor-pointer hover:underline ml-1 ${
+                          partOrder.status === 'Received' ? 'text-green-600 dark:text-green-400' :
+                          partOrder.status === 'Ordered' ? 'text-blue-600 dark:text-blue-400' :
+                          '' // Inherits color from parent p for other statuses
+                        }`}
+                        title="Click to change status"
+                      >
+                        {partOrder.status}
+                      </span>
+                    </p>
+                  )}
                   <p><strong>Priority:</strong> {partOrder.priority}</p>
                   <p><strong>Added:</strong> {formatDate(partOrder.dateAdded)}</p>
                   {partOrder.notes && <p><strong>Notes:</strong> {partOrder.notes}</p>}
