@@ -46,6 +46,7 @@ const ManageParts = () => {
   const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
   const [vehicleNameFilter, setVehicleNameFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
+  const [selectedVehicleIdForFilter, setSelectedVehicleIdForFilter] = useState('');
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
 
@@ -57,11 +58,39 @@ const ManageParts = () => {
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
-      // Optional: clear the state from location to prevent re-triggering on refresh/other navigation
-      // navigate(location.pathname, { replace: true, state: {} }); 
-      // For now, let's keep it simple. If issues arise, this can be added.
     }
   }, [location.state]);
+
+  // Effect to initialize UI vehicle filter from URL and update vehicle name display
+  useEffect(() => {
+    if (vehicleIdFilter && vehicles.length > 0) {
+      setSelectedVehicleIdForFilter(vehicleIdFilter);
+      const specificVehicle = vehicles.find(v => v.id === vehicleIdFilter);
+      if (specificVehicle) {
+        setVehicleNameFilter(`${specificVehicle.make} ${specificVehicle.model} (${specificVehicle.license_plate || specificVehicle.vin})`);
+      } else {
+        setVehicleNameFilter(`ID: ${vehicleIdFilter}`);
+      }
+    } else if (!vehicleIdFilter) {
+      // If URL filter is removed, clear UI filter and name
+      setSelectedVehicleIdForFilter('');
+      setVehicleNameFilter('');
+    }
+  }, [vehicleIdFilter, vehicles]);
+
+  // Effect to update vehicleNameFilter when selectedVehicleIdForFilter changes via UI
+  useEffect(() => {
+    if (selectedVehicleIdForFilter && vehicles.length > 0) {
+      const specificVehicle = vehicles.find(v => v.id === selectedVehicleIdForFilter);
+      if (specificVehicle) {
+        setVehicleNameFilter(`${specificVehicle.make} ${specificVehicle.model} (${specificVehicle.license_plate || specificVehicle.vin})`);
+      } else {
+        setVehicleNameFilter(`ID: ${selectedVehicleIdForFilter}`);
+      }
+    } else if (!selectedVehicleIdForFilter) {
+      setVehicleNameFilter('');
+    }
+  }, [selectedVehicleIdForFilter, vehicles]);
 
   const { data: parts, isLoading, error } = useQuery(
     ['parts', category],
@@ -97,39 +126,7 @@ const ManageParts = () => {
     fetchVehicles();
     fetchLocations();
     fetchSuppliers();
-
-    if (vehicleIdFilter) {
-      const fetchVehicleName = async () => {
-        try {
-          const vehicleData = await getAllVehicles();
-          const specificVehicle = vehicleData.find(v => v.id === vehicleIdFilter);
-          if (specificVehicle) {
-            setVehicleNameFilter(`${specificVehicle.make} ${specificVehicle.model} (${specificVehicle.license_plate || specificVehicle.vin})`);
-          } else {
-            setVehicleNameFilter(`ID: ${vehicleIdFilter}`);
-          }
-        } catch (error) {
-          console.error("Error fetching vehicle name for filter:", error);
-          setVehicleNameFilter(`ID: ${vehicleIdFilter}`);
-        }
-      };
-      fetchVehicleName();
-    } else {
-      setVehicleNameFilter('');
-    }
-  }, [vehicleIdFilter]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const partsData = await getAllParts();
-      const uniqueCategoriesFromParts = [...new Set(partsData.map(part => part.category).filter(cat => cat))];
-      
-      setCategories(['all', ...uniqueCategoriesFromParts.sort((a, b) => a.localeCompare(b))]);
-      
-      setFormCategoryOptions(uniqueCategoriesFromParts.sort((a, b) => a.localeCompare(b)));
-    };
-    fetchCategories();
-  }, [parts]);
+  }, []);
 
   const fetchVehicles = async () => {
     try {
@@ -444,8 +441,11 @@ const ManageParts = () => {
     if (!parts) return [];
     let processedParts = parts;
 
-    if (vehicleIdFilter) {
-      processedParts = processedParts.filter(part => part.vehicle_id === vehicleIdFilter);
+    // Prioritize UI filter, then URL parameter if UI filter is 'all' (or not set)
+    const currentVehicleFilter = selectedVehicleIdForFilter || vehicleIdFilter;
+
+    if (currentVehicleFilter) {
+      processedParts = processedParts.filter(part => part.vehicle_id === currentVehicleFilter);
     }
 
     if (showUnassignedOnly) {
@@ -467,7 +467,7 @@ const ManageParts = () => {
     }
     processedParts.sort((a, b) => naturalSort(a.description, b.description));
     return processedParts;
-  }, [parts, searchTerm, vehicleIdFilter, showUnassignedOnly, category, supplierFilter]);
+  }, [parts, searchTerm, selectedVehicleIdForFilter, vehicleIdFilter, showUnassignedOnly, category, supplierFilter]);
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
   const currentParts = filteredParts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -572,6 +572,20 @@ const ManageParts = () => {
                 </option>
               ))}
             </select>
+            <select
+              className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              value={selectedVehicleIdForFilter}
+              onChange={(e) => {
+                setSelectedVehicleIdForFilter(e.target.value);
+              }}
+            >
+              <option value="">All Vehicles</option>
+              {vehicles.sort((a,b) => naturalSort(a.make + a.model, b.make + b.model)).map(vehicle => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {vehicle.make} {vehicle.model} ({vehicle.license_plate || vehicle.vin})
+                </option>
+              ))}
+            </select>
             <div className="flex items-center ml-4">
               <input
                 type="checkbox"
@@ -585,13 +599,18 @@ const ManageParts = () => {
               </label>
             </div>
           </div>
-          {vehicleIdFilter && activeTab === 'mainInventory' && (
+          {selectedVehicleIdForFilter && activeTab === 'mainInventory' && (
             <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700 rounded-md">
               <p className="text-sm text-blue-700 dark:text-blue-200">
                 Showing parts assigned to vehicle: <strong>{vehicleNameFilter}</strong>. 
-                <Link to="/parts" className="ml-2 text-blue-600 dark:text-blue-400 hover:underline" onClick={() => setVehicleNameFilter('')}>
+                <button 
+                  onClick={() => {
+                    setSelectedVehicleIdForFilter('');
+                  }}
+                  className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                >
                   Clear filter
-                </Link>
+                </button>
               </p>
             </div>
           )}

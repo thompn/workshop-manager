@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getAllVehicles, addTask } from '../firebaseOperations'; // Assuming you have these
+import { getAllVehicles, addTask, getAllLocations } from '../firebaseOperations'; // Assuming you have these
 import { useNotification } from '../contexts/NotificationContext';
 import { serverTimestamp } from 'firebase/firestore';
 
@@ -17,6 +17,15 @@ const CreateTaskFromPartsModal = ({ isOpen, onClose, selectedPartIds, partsData 
     {
       enabled: isOpen,
       staleTime: 300000, 
+    }
+  );
+
+  const { data: locations, isLoading: isLoadingLocations } = useQuery(
+    'allLocationsForTaskModal',
+    getAllLocations,
+    {
+      enabled: isOpen,
+      staleTime: 300000, // 5 minutes, same as vehicles
     }
   );
 
@@ -85,13 +94,22 @@ const CreateTaskFromPartsModal = ({ isOpen, onClose, selectedPartIds, partsData 
     const linkedPartsData = Array.from(selectedPartIds)
       .map(id => {
         const part = partsData.find(p => p.id === id);
-        return part ? { 
+        if (!part) return null;
+
+        let locationName = null;
+        if (part.location_id && locations) {
+          const location = locations.find(loc => loc.id === part.location_id);
+          locationName = location ? location.name : null;
+        }
+
+        return { 
           partId: part.id, 
           partNumber: part.part_number_oem || part.part_number_vendor || null,
           description: part.description || null,
           quantityRequired: part.quantity || 1,
-          status: 'Pending' 
-        } : null;
+          status: 'Pending', 
+          locationName: locationName
+        };
       })
       .filter(p => p);
 
@@ -197,7 +215,7 @@ const CreateTaskFromPartsModal = ({ isOpen, onClose, selectedPartIds, partsData 
             <button
               type="submit"
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              disabled={createTaskMutation.isLoading || isLoadingVehicles}
+              disabled={createTaskMutation.isLoading || isLoadingVehicles || isLoadingLocations}
             >
               {createTaskMutation.isLoading ? 'Creating Task...' : 'Create Task for Vehicle'}
             </button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUpload } from 'react-icons/fa';
+import { FaUpload, FaClipboardList } from 'react-icons/fa';
 
 const UserProfile = () => {
   const { currentUser, updateUserProfile, getUserProfile } = useAuth();
@@ -141,12 +141,23 @@ const UserProfile = () => {
       </form>
       
       
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Admin Actions</h2>
-          <Link to="/admin/upload" className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            <FaUpload className="mr-2" />
-            Admin Upload
-          </Link>
+        <div className="mt-8 p-6 bg-white dark:bg-gray-800 shadow-md rounded">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Admin Actions</h3>
+          <div className="space-y-3">
+            <Link 
+              to="/admin/upload" 
+              className="flex items-center justify-center w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition ease-in-out duration-150">
+              <FaUpload className="mr-2" />
+              Admin Upload (Parts/Tools)
+            </Link>
+            <Link 
+              to="/stock-take" 
+              className="flex items-center justify-center w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md transition ease-in-out duration-150">
+              <FaClipboardList className="mr-2" />
+              Stock Take / Audit
+            </Link>
+            {/* Add other admin links here if needed */}
+          </div>
         </div>
 
     </div>
