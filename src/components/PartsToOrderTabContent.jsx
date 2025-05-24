@@ -642,7 +642,7 @@ const PartsToOrderTabContent = () => {
         cost: costInCents,
       }
     });
-    updatePartToOrderMutation.mutate({ id: partToReceive.id, payload: { status: 'Received' } });
+    deletePartToOrderMutation.mutate(partToReceive.id);
   };
 
   const handleCreateNewStockItem = async () => {
@@ -663,7 +663,7 @@ const PartsToOrderTabContent = () => {
       dateAdded: serverTimestamp(),
       dateModified: serverTimestamp(),
     });
-    updatePartToOrderMutation.mutate({ id: partToReceive.id, payload: { status: 'Received' } });
+    deletePartToOrderMutation.mutate(partToReceive.id);
   };
 
   return (

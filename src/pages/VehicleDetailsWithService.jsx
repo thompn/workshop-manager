@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks } from '../firebaseOperations';
+import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks, getAllParts, getAllLocations } from '../firebaseOperations';
 import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools } from 'react-icons/fa';
 import ServiceReport from '../components/ServiceReport';
 import { useNotification } from '../contexts/NotificationContext';
+import { useQuery } from 'react-query';
 
 const VehicleDetailsWithService = () => {
   const { showNotification } = useNotification();
@@ -17,6 +18,34 @@ const VehicleDetailsWithService = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [selectedServiceRecord, setSelectedServiceRecord] = useState(null);
   const [expandedTask, setExpandedTask] = useState(null);
+
+  // Fetch all parts for location lookup
+  const { data: allParts, isLoading: isLoadingAllParts, error: errorAllParts } = useQuery(
+    'allPartsForVehicleDetails',
+    getAllParts,
+    {
+      staleTime: 300000, // 5 minutes
+    }
+  );
+
+  // Fetch all locations for location lookup
+  const { data: allLocations, isLoading: isLoadingAllLocations, error: errorAllLocations } = useQuery(
+    'allLocationsForVehicleDetails',
+    getAllLocations,
+    {
+      staleTime: 300000, // 5 minutes
+    }
+  );
+
+  // New useEffect to log allParts and allLocations when they are loaded
+  useEffect(() => {
+    if (allParts) {
+      console.log("[VehicleDetailsWithService] allParts loaded (for general check):", JSON.parse(JSON.stringify(allParts)));
+    }
+    if (allLocations) {
+      console.log("[VehicleDetailsWithService] allLocations loaded (for general check):", JSON.parse(JSON.stringify(allLocations)));
+    }
+  }, [allParts, allLocations]);
 
   useEffect(() => {
     const fetchVehicleData = async () => {
@@ -96,6 +125,30 @@ const VehicleDetailsWithService = () => {
   if (loading) return <div>Loading vehicle details and service records...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!vehicle) return <div>Vehicle not found</div>;
+  if (isLoadingAllParts) return <div>Loading parts data...</div>;
+  if (errorAllParts) return <div>Error loading parts: {errorAllParts.message}</div>;
+  if (isLoadingAllLocations) return <div>Loading locations data...</div>;
+  if (errorAllLocations) return <div>Error loading locations: {errorAllLocations.message}</div>;
+
+  // Function to get location name for a part
+  const getLocationNameForPart = (partId) => {
+    console.log(`[getLocationNameForPart] Called for partId: ${partId}`);
+    if (!allParts || !allLocations) {
+      console.log('[getLocationNameForPart] allParts or allLocations not loaded yet.');
+      return null;
+    }
+    const mainInventoryPart = allParts.find(p => p.id === partId);
+    console.log(`[getLocationNameForPart] Found mainInventoryPart for ${partId}:`, mainInventoryPart);
+
+    if (mainInventoryPart && mainInventoryPart.location_id) {
+      console.log(`[getLocationNameForPart] Part ${partId} has location_id: ${mainInventoryPart.location_id}`);
+      const location = allLocations.find(loc => loc.id === mainInventoryPart.location_id);
+      console.log(`[getLocationNameForPart] Found location for ${mainInventoryPart.location_id}:`, location);
+      return location ? location.name : null;
+    }
+    console.log(`[getLocationNameForPart] Part ${partId} has no location_id or part not found in main inventory.`);
+    return null;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -252,6 +305,22 @@ const VehicleDetailsWithService = () => {
                     <p className={`text-sm font-semibold ${task.status === 'Done' ? 'text-green-500' : task.status === 'In Progress' ? 'text-yellow-500' : 'text-blue-500'}`}>
                       Status: {task.status}
                     </p>
+                    {task.linkedParts && task.linkedParts.length > 0 && (() => {
+                      const firstPart = task.linkedParts[0];
+                      console.log(`[Unexpanded View] Processing firstPart for task '${task.name}':`, firstPart);
+                      const currentLocationName = getLocationNameForPart(firstPart.partId);
+                      const displayLocation = currentLocationName || firstPart.locationName;
+                      console.log(`[Unexpanded View] For part ${firstPart.partId}, currentLocationName: ${currentLocationName}, stored part.locationName: ${firstPart.locationName}, final displayLocation: ${displayLocation}`);
+                      
+                      return (
+                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Linked Part: {firstPart.description || firstPart.partNumber}
+                          (Qty: {firstPart.quantityRequired})
+                          {displayLocation && ` - Loc: ${displayLocation}`}
+                          {task.linkedParts.length > 1 && ` (+${task.linkedParts.length - 1} more)`}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {expandedTask === task.id ? <FaChevronUp /> : <FaChevronDown />}
                 </div>
@@ -269,11 +338,18 @@ const VehicleDetailsWithService = () => {
                           <FaTools className="mr-2 text-gray-500" /> Linked Parts:
                         </h4>
                         <ul className="list-disc list-inside pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                          {task.linkedParts.map((part, index) => (
-                            <li key={`${part.partId}-${index}`}>
-                              {part.description || part.partNumber} (Qty: {part.quantityRequired})
-                            </li>
-                          ))}
+                          {task.linkedParts.map((part, index) => {
+                            console.log(`[Expanded View] Processing part for task '${task.name}':`, part);
+                            const currentLocationName = getLocationNameForPart(part.partId);
+                            const displayLocation = currentLocationName || part.locationName;
+                            console.log(`[Expanded View] For part ${part.partId}, currentLocationName: ${currentLocationName}, stored part.locationName: ${part.locationName}, final displayLocation: ${displayLocation}`);
+                            return (
+                              <li key={`${part.partId}-${index}`}>
+                                {part.description || part.partNumber} (Qty: {part.quantityRequired})
+                                {displayLocation && <span className="text-xs text-gray-500 dark:text-gray-400"> - Location: {displayLocation}</span>}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     )}
@@ -289,7 +365,7 @@ const VehicleDetailsWithService = () => {
         <Link to={`/vehicles/${id}/add-service`} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
           Add Service Record
         </Link>
-        <Link to={`/parts?vehicleId=${id}`} className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded">
+        <Link to={`/parts?vehicleId=${vehicle.id}`} className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded">
           View Parts for this Vehicle
         </Link>
         <Link to="/vehicles" className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">

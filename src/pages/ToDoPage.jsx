@@ -5,12 +5,12 @@ import { getAllTasksAcrossVehicles, updateTask } from '../firebaseOperations'; /
 import { FaCar, FaTools, FaFilter, FaSortAmountDown, FaSortAmountUp, FaUndo } from 'react-icons/fa';
 import { useNotification } from '../contexts/NotificationContext'; // For notifications
 
-const TASK_STATUS_OPTIONS = ['To Do', 'In Progress', 'Done', 'Blocked', 'Cancelled'];
+const TASK_STATUS_OPTIONS = ['Open', 'To Do', 'In Progress', 'Done', 'Blocked', 'Cancelled', 'All'];
 
 const ToDoPage = () => {
   const { showNotification } = useNotification();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('Open');
   const [vehicleFilter, setVehicleFilter] = useState('All');
   const [sortConfig, setSortConfig] = useState({ key: 'dateAdded', direction: 'descending' });
 
@@ -80,7 +80,9 @@ const ToDoPage = () => {
     }
 
     // Filter by status
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Open') {
+      tasks = tasks.filter(task => task.status !== 'Done' && task.status !== 'Cancelled');
+    } else if (statusFilter !== 'All') {
       tasks = tasks.filter(task => task.status === statusFilter);
     }
 
@@ -155,8 +157,7 @@ const ToDoPage = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700"
           >
-            <option value="All">All Statuses</option>
-            {TASK_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+            {TASK_STATUS_OPTIONS.map(status => <option key={status} value={status}>{status === 'Open' ? 'Open Tasks' : status}</option>)}
           </select>
         </div>
         <div>

@@ -26,6 +26,7 @@ import EpicDetails from './pages/EpicDetails';
 import AdminUpload from './components/AdminUpload';
 import ManageSuppliers from './pages/ManageSuppliers';
 import ToDoPage from './pages/ToDoPage'; // Import the new ToDoPage
+import StockTakePage from './pages/StockTakePage'; // <-- Add this import
 
 // Define PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -68,6 +69,7 @@ function AppContent() {
             <Route path="/vehicles/manage" element={<PrivateRoute><ManageVehicles /></PrivateRoute>} />
             <Route path="/parts" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
             <Route path="/parts/manage" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
+            <Route path="/stock-take" element={<PrivateRoute><StockTakePage /></PrivateRoute>} />
             <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
             <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
