@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { getAllParts, addNewPart, updatePart, deletePart, getAllVehicles, getAllLocations, uploadInvoiceToStorage, getPartsByCategory, getAllSuppliers } from '../firebaseOperations';
-import { FaEdit, FaTrash, FaPlus, FaMinus, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaMinus, FaSearch, FaChevronDown, FaChevronUp, FaTasks } from 'react-icons/fa';
 import { getDownloadURL } from 'firebase/storage';
 import { naturalSort } from '../utils/naturalSort';
 import { useNotification } from '../contexts/NotificationContext';
@@ -37,10 +37,10 @@ const ManageParts = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [expandedPart, setExpandedPart] = useState(null);
+  const [expandedPartId, setExpandedPartId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [category, setCategory] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [categories, setCategories] = useState(['all']);
   const [formCategoryOptions, setFormCategoryOptions] = useState([]);
   const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
@@ -93,11 +93,18 @@ const ManageParts = () => {
   }, [selectedVehicleIdForFilter, vehicles]);
 
   const { data: parts, isLoading, error } = useQuery(
-    ['parts', category],
-    () => category === 'all' ? getAllParts() : getPartsByCategory(category),
+    ['parts', 'all'],
+    () => getAllParts(),
     {
-      staleTime: 300000, // 5 minutes
-      cacheTime: 3600000, // 1 hour
+      staleTime: 300000,
+      cacheTime: 3600000,
+      onSuccess: (allPartsData) => {
+        if (allPartsData) {
+          const uniqueCategories = ['all', ...new Set(allPartsData.map(p => p.category).filter(Boolean))];
+          setCategories(uniqueCategories.sort(naturalSort));
+          setFormCategoryOptions([...new Set(allPartsData.map(p => p.category).filter(Boolean))].sort(naturalSort));
+        }
+      }
     }
   );
 
@@ -212,7 +219,7 @@ const ManageParts = () => {
       }
       await updatePartMutation.mutateAsync({ id: editingPart.id, payload: editingPart });
       setEditingPart(null);
-      setExpandedPart(null);
+      setExpandedPartId(null);
       showNotification("Part updated successfully!", "success");
     } catch (error) {
       console.error("Error updating part. Data sent was:", JSON.stringify(editingPart, null, 2));
@@ -270,151 +277,162 @@ const ManageParts = () => {
   };
 
   const renderPartForm = (part, setPart, submitHandler, buttonText) => (
-    <div className="grid grid-cols-2 gap-4">
-      {[
-        { name: "part_number_oem", label: "OEM Part Number", type: "text" },
-        { name: "part_number_vendor", label: "Vendor Part Number", type: "text" },
-        { name: "description", label: "Description", type: "text" },
-        { name: "cost", label: "Cost", type: "number" },
-        { name: "stock_level", label: "Stock Level", type: "number" },
-        { name: "reorder_threshold", label: "Reorder Threshold", type: "number" },
-        { name: "invoice_number", label: "Invoice Number", type: "text" },
-      ].map((field) => (
-        <div key={field.name} className="flex flex-col">
-          <label htmlFor={field.name} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            {field.label}
+    <form onSubmit={(e) => { e.preventDefault(); submitHandler(); }} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { name: "part_number_oem", label: "OEM Part Number", type: "text" },
+          { name: "part_number_vendor", label: "Vendor Part Number", type: "text" },
+          { name: "description", label: "Description", type: "text" },
+          { name: "cost", label: "Cost (in cents)", type: "number" },
+          { name: "stock_level", label: "Stock Level", type: "number" },
+          { name: "reorder_threshold", label: "Reorder Threshold", type: "number" },
+          { name: "invoice_number", label: "Invoice Number", type: "text" },
+        ].map((field) => (
+          <div key={field.name} className="flex flex-col">
+            <label htmlFor={`${field.name}-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              {field.label}
+            </label>
+            <input
+              type={field.type}
+              id={`${field.name}-${part?.id || 'new'}`}
+              name={field.name}
+              value={part[field.name] || (field.type === 'number' ? 0 : '')}
+              onChange={(e) => handleInputChange(e, part, setPart)}
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+        ))}
+        <div className="flex flex-col">
+          <label htmlFor={`category-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Category
           </label>
           <input
-            type={field.type}
-            id={field.name}
-            name={field.name}
-            value={part[field.name] || ''}
+            type="text"
+            id={`category-${part?.id || 'new'}`}
+            name="category"
+            list={`category-datalist-${part?.id || 'new'}`}
+            value={part.category || ''}
             onChange={(e) => handleInputChange(e, part, setPart)}
-            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Select or type new category"
           />
+          <datalist id={`category-datalist-${part?.id || 'new'}`}>
+            {formCategoryOptions.map(cat => (
+              <option key={cat} value={cat} />
+            ))}
+          </datalist>
         </div>
-      ))}
-      <div className="flex flex-col">
-        <label htmlFor="category" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Category
-        </label>
-        <input
-          type="text"
-          id="category"
-          name="category"
-          list="category-datalist"
-          value={part.category || ''}
-          onChange={(e) => handleInputChange(e, part, setPart)}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="Select or type new category"
-        />
-        <datalist id="category-datalist">
-          {formCategoryOptions.map(cat => (
-            <option key={cat} value={cat} />
-          ))}
-        </datalist>
-      </div>
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="consumable"
-          name="consumable"
-          checked={part.consumable}
-          onChange={(e) => handleInputChange(e, part, setPart)}
-          className="mr-2"
-        />
-        <label htmlFor="consumable" className="text-gray-800 dark:text-white">Consumable</label>
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="vehicle_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Associated Vehicle
-        </label>
-        <select
-          id="vehicle_id"
-          name="vehicle_id"
-          value={part.vehicle_id}
-          onChange={(e) => handleInputChange(e, part, setPart)}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-        >
-          <option value="">Select Vehicle (Optional)</option>
-          {vehicles.map(vehicle => (
-            <option key={vehicle.id} value={vehicle.id}>
-              {vehicle.make} {vehicle.model} ({vehicle.license_plate})
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="supplier_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Supplier
-        </label>
-        <select
-          id="supplier_id"
-          name="supplier_id"
-          value={part.supplier_id}
-          onChange={(e) => handleInputChange(e, part, setPart)}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-        >
-          <option value="">Select Supplier</option>
-          {suppliers.sort((a, b) => naturalSort(a.name, b.name)).map(supplier => (
-            <option key={supplier.id} value={supplier.id}>
-              {supplier.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="location_id" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Location
-        </label>
-        <select
-          id="location_id"
-          name="location_id"
-          value={part.location_id}
-          onChange={(e) => handleInputChange(e, part, setPart)}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-        >
-          <option value="">Select Location</option>
-          {locations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
-            <option key={location.id} value={location.id}>
-              {location.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="col-span-2">
-        <label htmlFor="invoice_upload" className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Upload Invoice (PDF)
-        </label>
-        <input
-          type="file"
-          id="invoice_upload"
-          accept=".pdf"
-          onChange={handleFileUpload}
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-        />
-        {invoiceFile && (
-          <button
-            onClick={uploadInvoice}
-            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        <div className="flex items-center mt-2 md:mt-0 md:pt-6">
+          <input
+            type="checkbox"
+            id={`consumable-${part?.id || 'new'}`}
+            name="consumable"
+            checked={!!part.consumable}
+            onChange={(e) => handleInputChange(e, part, setPart)}
+            className="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+          />
+          <label htmlFor={`consumable-${part?.id || 'new'}`} className="text-sm text-gray-800 dark:text-white">Consumable</label>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor={`vehicle_id-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Associated Vehicle
+          </label>
+          <select
+            id={`vehicle_id-${part?.id || 'new'}`}
+            name="vehicle_id"
+            value={part.vehicle_id || ''}
+            onChange={(e) => handleInputChange(e, part, setPart)}
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 h-10"
           >
-            Upload Invoice
-          </button>
-        )}
-        {uploadProgress > 0 && uploadProgress < 100 && (
-          <div className="mt-2">
-            <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${uploadProgress}%` }}>
-              {uploadProgress.toFixed(0)}%
+            <option value="">Select Vehicle (Optional)</option>
+            {vehicles.map(vehicle => (
+              <option key={vehicle.id} value={vehicle.id}>
+                {vehicle.make} {vehicle.model} ({vehicle.license_plate || vehicle.vin})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor={`supplier_id-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Supplier
+          </label>
+          <select
+            id={`supplier_id-${part?.id || 'new'}`}
+            name="supplier_id"
+            value={part.supplier_id || ''}
+            onChange={(e) => handleInputChange(e, part, setPart)}
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 h-10"
+          >
+            <option value="">Select Supplier</option>
+            {suppliers.sort((a, b) => naturalSort(a.name, b.name)).map(supplier => (
+              <option key={supplier.id} value={supplier.id}>
+                {supplier.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor={`location_id-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Location
+          </label>
+          <select
+            id={`location_id-${part?.id || 'new'}`}
+            name="location_id"
+            value={part.location_id || ''}
+            onChange={(e) => handleInputChange(e, part, setPart)}
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 h-10"
+          >
+            <option value="">Select Location</option>
+            {locations.sort((a, b) => naturalSort(a.name, b.name)).map(location => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor={`invoice_upload-${part?.id || 'new'}`} className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Upload Invoice (PDF)
+          </label>
+          <input
+            type="file"
+            id={`invoice_upload-${part?.id || 'new'}`}
+            accept=".pdf"
+            onChange={handleFileUpload}
+            className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          {invoiceFile && editingPart && editingPart.id === part.id && (
+            <button
+              type="button"
+              onClick={uploadInvoice}
+              className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Upload Selected Invoice
+            </button>
+          )}
+          {uploadProgress > 0 && editingPart && editingPart.id === part.id && (
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+      <div className="mt-6 flex justify-end">
+        <button 
+          type="submit" 
+          className="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          disabled={updatePartMutation.isLoading || addPartMutation.isLoading}
+        >
+          {buttonText}
+        </button>
+      </div>
+    </form>
   );
 
   const handleEditClick = (partId) => {
-    setEditingPart(parts.find(part => part.id === partId));
-    setExpandedPart(expandedPart === partId ? null : partId);
+    const partToEdit = parts.find(part => part.id === partId);
+    setEditingPart(partToEdit);
+    setExpandedPartId(partId);
   };
 
   const handleSelectMainPart = (partId) => {
@@ -430,47 +448,57 @@ const ManageParts = () => {
   };
 
   const handleSelectAllMainParts = () => {
-    if (selectedMainPartIds.size === filteredParts.length) {
+    if (selectedMainPartIds.size === paginatedParts.length) {
       setSelectedMainPartIds(new Set());
     } else {
-      setSelectedMainPartIds(new Set(filteredParts.map(p => p.id)));
+      setSelectedMainPartIds(new Set(paginatedParts.map(p => p.id)));
     }
   };
 
   const filteredParts = useMemo(() => {
     if (!parts) return [];
-    let processedParts = parts;
+    let tempParts = [...parts];
 
-    // Prioritize UI filter, then URL parameter if UI filter is 'all' (or not set)
-    const currentVehicleFilter = selectedVehicleIdForFilter || vehicleIdFilter;
-
-    if (currentVehicleFilter) {
-      processedParts = processedParts.filter(part => part.vehicle_id === currentVehicleFilter);
+    const currentVehicleFilterId = selectedVehicleIdForFilter || vehicleIdFilter;
+    if (currentVehicleFilterId) {
+      tempParts = tempParts.filter(part => part.vehicle_id === currentVehicleFilterId);
     }
 
     if (showUnassignedOnly) {
-      processedParts = processedParts.filter(part => !part.vehicle_id || part.vehicle_id === '');
+      tempParts = tempParts.filter(part => !part.vehicle_id);
     }
 
     if (supplierFilter) {
-      processedParts = processedParts.filter(part => part.supplier_id === supplierFilter);
+      tempParts = tempParts.filter(part => part.supplier_id === supplierFilter);
+    }
+
+    if (categoryFilter && categoryFilter !== 'all') {
+      tempParts = tempParts.filter(part => part.category === categoryFilter);
     }
 
     if (searchTerm) {
-      processedParts = processedParts.filter(part =>
-        (part.part_number_oem && part.part_number_oem.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (part.part_number_vendor && part.part_number_vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (part.description && part.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (part.category && part.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (part.invoice_number && part.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()))
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      tempParts = tempParts.filter(part =>
+        part.description?.toLowerCase().includes(lowerSearchTerm) ||
+        part.part_number_oem?.toLowerCase().includes(lowerSearchTerm) ||
+        part.part_number_vendor?.toLowerCase().includes(lowerSearchTerm)
       );
     }
-    processedParts.sort((a, b) => naturalSort(a.description, b.description));
-    return processedParts;
-  }, [parts, searchTerm, selectedVehicleIdForFilter, vehicleIdFilter, showUnassignedOnly, category, supplierFilter]);
+    tempParts.sort((a, b) => naturalSort(a.description, b.description));
+    return tempParts;
+  }, [parts, searchTerm, selectedVehicleIdForFilter, vehicleIdFilter, showUnassignedOnly, supplierFilter, categoryFilter, naturalSort]);
+
+  const handleToggleExpandPart = (partId) => {
+    setExpandedPartId(prevId => (prevId === partId ? null : partId));
+  };
+  
+  const paginatedParts = useMemo(() => {
+    if (!filteredParts || filteredParts.length === 0) return [];
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredParts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredParts, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
-  const currentParts = filteredParts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="container mx-auto p-4">
@@ -509,9 +537,9 @@ const ManageParts = () => {
             <div className="mb-4 flex justify-between items-center">
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center transition duration-150 ease-in-out"
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center transition duration-150 ease-in-out"
               >
-                {showAddForm ? <FaMinus className="mr-2" /> : <FaPlus className="mr-2" />}
+                <FaPlus className="mr-2" />
                 {showAddForm ? 'Cancel' : 'Add New Part'}
               </button>
               {selectedMainPartIds.size > 0 && (
@@ -538,65 +566,68 @@ const ManageParts = () => {
             </div>
           )}
 
-          <div className="mb-6 flex space-x-4">
-            <div className="relative flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow items-end">
+            <div className="relative flex-grow md:col-span-1">
               <input
                 type="text"
-                placeholder="Search parts..."
-                className="w-full p-2 pl-8 pr-4 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+                placeholder="Search by name, OEM, vendor..."
+                className="w-full p-2 pl-10 pr-4 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FaSearch className="absolute left-3 top-3 text-gray-400" />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
-            <select
-              className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat === 'all' ? 'All Categories' : cat}
-                </option>
-              ))}
-            </select>
-            <select
-              className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              value={supplierFilter}
-              onChange={(e) => setSupplierFilter(e.target.value)}
-            >
-              <option value="">All Suppliers</option>
-              {suppliers.sort((a, b) => naturalSort(a.name, b.name)).map(supplier => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="p-2 rounded border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              value={selectedVehicleIdForFilter}
-              onChange={(e) => {
-                setSelectedVehicleIdForFilter(e.target.value);
-              }}
-            >
-              <option value="">All Vehicles</option>
-              {vehicles.sort((a,b) => naturalSort(a.make + a.model, b.make + b.model)).map(vehicle => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.make} {vehicle.model} ({vehicle.license_plate || vehicle.vin})
-                </option>
-              ))}
-            </select>
-            <div className="flex items-center ml-4">
-              <input
-                type="checkbox"
-                id="showUnassignedManagePartsOnly"
-                checked={showUnassignedOnly}
-                onChange={(e) => setShowUnassignedOnly(e.target.checked)}
-                className="mr-2 h-4 w-4 bg-white rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:checked:bg-blue-500 dark:checked:border-transparent"
-              />
-              <label htmlFor="showUnassignedManagePartsOnly" className="text-sm text-gray-700 dark:text-gray-300">
-                Show unassigned only
-              </label>
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Category</label>
+              <select
+                id="categoryFilter"
+                name="categoryFilter"
+                value={categoryFilter}
+                onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white h-10"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="vehicleFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Vehicle</label>
+              <select 
+                id="vehicleFilter"
+                value={selectedVehicleIdForFilter}
+                onChange={(e) => setSelectedVehicleIdForFilter(e.target.value)} 
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white h-10"
+              >
+                <option value="">All Vehicles</option>
+                {vehicles.map(v => <option key={v.id} value={v.id}>{v.make} {v.model} ({v.license_plate || v.vin})</option>)}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="supplierFilterSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Supplier</label>
+              <select 
+                id="supplierFilterSelect" 
+                value={supplierFilter} 
+                onChange={(e) => setSupplierFilter(e.target.value)} 
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white h-10"
+              >
+                <option value="">All Suppliers</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button 
+                onClick={() => {
+                  setSelectedVehicleIdForFilter('');
+                  setSupplierFilter('');
+                  setCategoryFilter('all');
+                  setSearchTerm('');
+                  setShowUnassignedOnly(false);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 h-10"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
           {selectedVehicleIdForFilter && activeTab === 'mainInventory' && (
@@ -615,99 +646,153 @@ const ManageParts = () => {
             </div>
           )}
           {/* List of existing parts */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Existing Parts</h2>
-            <table className="w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
+            <h2 className="text-2xl font-bold mb-4 p-4 text-gray-800 dark:text-white">Main Inventory</h2>
+            <table className="w-full min-w-max">
               <thead>
                 <tr className="bg-gray-200 dark:bg-gray-700">
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="p-3 w-4">
                     <input 
-                      type="checkbox"
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      checked={filteredParts && filteredParts.length > 0 && selectedMainPartIds.size === filteredParts.length}
-                      onChange={handleSelectAllMainParts}
-                      disabled={!filteredParts || filteredParts.length === 0}
+                      type="checkbox" 
+                      onChange={handleSelectAllMainParts} 
+                      checked={selectedMainPartIds.size > 0 && paginatedParts.length > 0 && selectedMainPartIds.size === paginatedParts.length}
+                      disabled={paginatedParts.length === 0}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">OEM Part No.</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Vendor Part No.</th>
                   <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">OEM Part No.</th>
+                  <th className="p-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock</th>
+                  <th className="p-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cost</th>
                   <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock Level</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Vehicle</th>
-                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                  <th className="p-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {currentParts.map(part => (
-                  <React.Fragment key={part.id}>
-                    <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out ${expandedPart === part.id ? 'bg-gray-100 dark:bg-gray-700' : ''}`}>
-                      <td className="p-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <input 
-                          type="checkbox"
-                          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                          checked={selectedMainPartIds.has(part.id)}
-                          onChange={() => handleSelectMainPart(part.id)}
-                        />
-                      </td>
-                      <td 
-                        className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400"
+                {paginatedParts.map((part) => {
+                  const isExpanded = expandedPartId === part.id;
+                  const stockLevel = part.stock_level || 0;
+                  const reorderThreshold = part.reorder_threshold || 0;
+                  let stockClass = 'text-gray-700 dark:text-gray-300';
+                  let stockIndicatorClass = 'bg-gray-400';
+
+                  if (stockLevel <= 0) {
+                    stockClass = 'text-red-600 dark:text-red-400 font-semibold';
+                    stockIndicatorClass = 'bg-red-500';
+                  } else if (stockLevel <= reorderThreshold) {
+                    stockClass = 'text-yellow-600 dark:text-yellow-400 font-semibold';
+                    stockIndicatorClass = 'bg-yellow-500';
+                  } else {
+                    stockIndicatorClass = 'bg-green-500';
+                  }
+
+                  const supplierName = suppliers.find(s => s.id === part.supplier_id)?.name || 'N/A';
+                  const locationName = locations.find(l => l.id === part.location_id)?.name || 'N/A';
+                  const isSelected = selectedMainPartIds.has(part.id);
+
+                  return (
+                    <React.Fragment key={part.id}>
+                      <tr 
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 ease-in-out ${isExpanded ? 'bg-gray-100 dark:bg-gray-600' : ''} ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900' : ''} cursor-pointer`}
+                        onClick={() => handleToggleExpandPart(part.id)}
                       >
-                        {part.part_number_oem}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white hidden md:table-cell">
-                        {part.part_number_vendor}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {part.description}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {part.category}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {part.stock_level}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {vehicles.find(v => v.id === part.vehicle_id)?.license_plate || 'N/A'}
-                      </td>
-                      <td className="p-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        <button
-                          onClick={() => handleEditClick(part.id)}
-                          className="text-yellow-500 hover:text-yellow-700 mr-2"
-                        >
-                          <FaEdit className="text-xl" />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePart(part.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash className="text-xl" />
-                        </button>
-                      </td>
-                    </tr>
-                    {expandedPart === part.id && (
-                      <tr>
-                        <td colSpan="8" className="bg-white dark:bg-gray-800">
-                          <div className={`bg-gray-100 dark:bg-gray-800 p-4 transition-all duration-300 ${expandedPart === part.id ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                            {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
-                            <button
-                              onClick={handleEditPart}
-                              className="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected} 
+                            onChange={() => handleSelectMainPart(part.id)} 
+                            className="rounded text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600" 
+                          />
+                        </td>
+                        <td className="p-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleToggleExpandPart(part.id); }}
+                              className="mr-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 text-xs p-1 rounded hover:bg-indigo-100 dark:hover:bg-indigo-700"
+                              aria-label={isExpanded ? 'Collapse' : 'Expand'}
                             >
-                              Save Changes
+                              {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
                             </button>
-                            <button
-                              onClick={() => setExpandedPart(null)}
-                              className="mt-4 ml-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-                            >
-                              Cancel
-                            </button>
+                            {part.description}
                           </div>
                         </td>
+                        <td className="p-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{part.part_number_oem}</td>
+                        <td className={`p-3 text-sm text-right whitespace-nowrap ${stockClass}`}>
+                          <span className={`inline-block w-3 h-3 rounded-full mr-2 ${stockIndicatorClass}`} title={`Stock: ${stockLevel}, Reorder at: ${reorderThreshold}`}></span>
+                          {stockLevel}
+                        </td>
+                        <td className="p-3 text-sm text-gray-500 dark:text-gray-400 text-right whitespace-nowrap">
+                          {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(part.cost / 100)}
+                        </td>
+                        <td className="p-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{part.category || 'N/A'}</td>
+                        <td className="p-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{locationName}</td>
+                        <td className="p-3 text-sm text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleEditClick(part.id); }} 
+                            className="text-yellow-500 hover:text-yellow-700 p-1 rounded hover:bg-yellow-100 dark:hover:bg-gray-700"
+                            aria-label="Edit Part"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); if(window.confirm('Are you sure you want to delete this part?')) handleDeletePart(part.id); }} 
+                            className="text-red-500 hover:text-red-700 p-1 ml-2 rounded hover:bg-red-100 dark:hover:bg-gray-700"
+                            aria-label="Delete Part"
+                          >
+                            <FaTrash />
+                          </button>
+                        </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
+                      {isExpanded && (
+                        <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                          <td colSpan={activeTab === 'mainInventory' ? 8 : 7} className="p-4">
+                            {editingPart && editingPart.id === part.id ? (
+                              <div className="bg-white dark:bg-slate-700 p-4 rounded shadow-md">
+                                {renderPartForm(editingPart, setEditingPart, handleEditPart, "Save Changes")}
+                                <button
+                                    onClick={() => setEditingPart(null)}
+                                    className="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                                >
+                                    Cancel Edit
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-3 text-sm p-2 bg-white dark:bg-slate-700 rounded shadow-md">
+                                <h4 className="text-md font-semibold text-gray-800 dark:text-white mb-2 border-b pb-2 border-gray-200 dark:border-gray-600">Detailed Information</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Description:</strong> {part.description}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">OEM Part No.:</strong> {part.part_number_oem}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Vendor Part No.:</strong> {part.part_number_vendor || 'N/A'}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Category:</strong> {part.category || 'N/A'}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Cost:</strong> {new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(part.cost / 100)}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Stock Level:</strong> <span className={stockClass}>{stockLevel}</span></p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Reorder Threshold:</strong> {part.reorder_threshold || 0}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Supplier:</strong> {supplierName}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Location:</strong> {locationName}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Consumable:</strong> {part.consumable ? 'Yes' : 'No'}</p>
+                                  <p><strong className="font-medium text-gray-600 dark:text-gray-300">Invoice Number:</strong> {part.invoice_number || 'N/A'}</p>
+                                  {part.vehicle_id && vehicles.find(v => v.id === part.vehicle_id) && (
+                                    <p><strong className="font-medium text-gray-600 dark:text-gray-300">Assigned Vehicle:</strong> {vehicles.find(v => v.id === part.vehicle_id)?.make} {vehicles.find(v => v.id === part.vehicle_id)?.model || 'N/A'} ({vehicles.find(v => v.id === part.vehicle_id)?.license_plate || vehicles.find(v => v.id === part.vehicle_id)?.vin})</p>
+                                  )}
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex space-x-3">
+                                  <button 
+                                    onClick={() => handleEditClick(part.id)} 
+                                    className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium flex items-center"
+                                  >
+                                    <FaEdit className="mr-2"/> Edit This Part
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -740,10 +825,9 @@ const ManageParts = () => {
           isOpen={showCreateTaskModal}
           onClose={() => {
             setShowCreateTaskModal(false);
-            // Optionally clear selection: setSelectedMainPartIds(new Set()); 
           }}
-          selectedPartIds={selectedMainPartIds} // Pass the main inventory selection
-          partsData={parts} // Pass the main inventory parts data
+          selectedPartIds={selectedMainPartIds}
+          partsData={parts}
         />
       )}
     </div>
