@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks, getAllParts, getAllLocations, getAllPartsToOrder, addPartToOrder } from '../firebaseOperations';
-import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools, FaPlus, FaSave, FaTimes, FaClipboardList, FaBarcode, FaPlusCircle } from 'react-icons/fa';
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from '../firebase';
+import { getVehicleDetailsByVin } from '../vehicleApi';
+import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools, FaPlus, FaSave, FaTimes, FaClipboardList, FaBarcode, FaPlusCircle, FaSpinner } from 'react-icons/fa';
 import ServiceReport from '../components/ServiceReport';
 import { useNotification } from '../contexts/NotificationContext';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
@@ -28,6 +31,7 @@ const VehicleDetailsWithService = () => {
   const [selectedTaskForParts, setSelectedTaskForParts] = useState(null);
   const [isQuickRequestModalOpen, setIsQuickRequestModalOpen] = useState(false);
   const [selectedTaskForPartRequest, setSelectedTaskForPartRequest] = useState(null);
+  const [isFetchingNHTSADetailsForPage, setIsFetchingNHTSADetailsForPage] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -160,9 +164,87 @@ const VehicleDetailsWithService = () => {
     setIsQuickRequestModalOpen(true);
   };
 
-  if (loading) return <div>Loading vehicle details and service records...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!vehicle) return <div>Vehicle not found</div>;
+  const formatFieldName = (fieldName) => {
+    if (!fieldName) return '';
+    if (fieldName.includes(' ') || fieldName.includes('(') || fieldName.includes(')')) {
+        return fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+    }
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const handleFetchAndStoreNHTSADetails = async () => {
+    if (!vehicle || !vehicle.vin) {
+      showNotification("Vehicle VIN not available.", "warning");
+      return;
+    }
+    setIsFetchingNHTSADetailsForPage(true);
+    console.log("[VehicleDetails] Fetching NHTSA details for VIN:", vehicle.vin, "Year:", vehicle.year);
+    try {
+      const details = await getVehicleDetailsByVin(vehicle.vin, vehicle.year ? vehicle.year.toString() : null);
+      console.log("[VehicleDetails] Raw details from API:", JSON.parse(JSON.stringify(details)));
+
+      if (details && details.ErrorCode && details.ErrorCode !== "0" && details.ErrorCode !== "00") {
+        showNotification(`NHTSA API Error: ${details.ErrorText || 'Unknown error. Code: ' + details.ErrorCode}`, "error");
+        console.error("NHTSA API Error:", details);
+      } else if (details && (details.ErrorCode === "0" || details.ErrorCode === "00") && details.Results && details.Results.length === 0 && !Object.keys(details).some(k => k !== 'ErrorCode' && k !== 'ErrorText' && k !== 'Results' && k !== 'Message' && k !== 'SearchCriteria')) {
+        showNotification("No detailed specifications found for this VIN (NHTSA returned empty results array but success code).", "info");
+        console.log("[VehicleDetails] NHTSA returned success code but empty results array.");
+         // Optionally, still store that an attempt was made, maybe with the minimal details like ErrorCode
+        // await updateDoc(doc(db, "vehicles", id), { vinDetails: { ErrorCode: details.ErrorCode, Message: "No results" } });
+        // setVehicle(prev => ({ ...prev, vinDetails: { ErrorCode: details.ErrorCode, Message: "No results" } }));
+
+      } else if (details && Object.keys(details).length > 0) {
+        const cleanedDetails = Object.entries(details)
+          .filter(([key, value]) => 
+            value && value.toString().trim() !== "" && 
+            key !== "Error Text" && key !== "ErrorCode" && 
+            key !== "Results" && // Exclude the raw Results array itself from cleaned key-value pairs
+            key !== "Message" && key !== "SearchCriteria" && // Exclude other top-level metadata
+            !key.startsWith("AdditionalError")
+          )
+          .reduce((obj, [key, value]) => {
+            // Only include primitive values in the final cleanedDetails for direct display
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null) {
+                 obj[key] = value;
+            }
+            return obj;
+          }, {});
+        
+        console.log("[VehicleDetails] Cleaned details for storage/display:", JSON.parse(JSON.stringify(cleanedDetails)));
+
+        if (Object.keys(cleanedDetails).length === 0) {
+             showNotification("No displayable vehicle specifications found for this VIN after processing.", "info");
+             console.log("[VehicleDetails] Cleaned details object is empty.");
+             // Store the raw details if cleaned is empty but API call was somewhat successful, for debugging
+             // This helps see what was returned if cleaning removed everything.
+             // Consider storing a specific marker if you want the UI to reflect "attempted, nothing useful found"
+             await updateDoc(doc(db, "vehicles", id), { vinDetails: { fetchAttempted: true, rawResponseErrorCode: details.ErrorCode, message: "No displayable details after cleaning" } });
+             setVehicle(prev => ({ ...prev, vinDetails: { fetchAttempted: true, rawResponseErrorCode: details.ErrorCode, message: "No displayable details after cleaning" } }));
+
+        } else {
+            await updateDoc(doc(db, "vehicles", id), { vinDetails: cleanedDetails });
+            setVehicle(prev => ({ ...prev, vinDetails: cleanedDetails }));
+            showNotification("Successfully fetched and stored vehicle specifications from NHTSA.", "success");
+        }
+      } else {
+         // This case handles if 'details' is null, undefined, or an empty object from getVehicleDetailsByVin (e.g., FETCH_ERROR)
+         const errorMessage = details?.ErrorText || "Failed to fetch details or API returned no data.";
+         showNotification(errorMessage, "error");
+         console.log("[VehicleDetails] Failed to fetch details or API returned no data. Details object:", details);
+      }
+    } catch (error) {
+      console.error("Error in handleFetchAndStoreNHTSADetails catch block:", error);
+      showNotification(`Client-side error during fetch: ${error.message}`, "error");
+    }
+    setIsFetchingNHTSADetailsForPage(false);
+  };
+
+  if (loading) return <div className="p-4"><FaSpinner className="animate-spin text-xl" /> Loading vehicle details...</div>;
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  if (!vehicle) return <div className="p-4">Vehicle not found</div>;
   if (isLoadingAllParts) return <div>Loading parts data...</div>;
   if (errorAllParts) return <div>Error loading parts: {errorAllParts.message}</div>;
   if (isLoadingAllLocations) return <div>Loading locations data...</div>;
@@ -190,18 +272,64 @@ const VehicleDetailsWithService = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">{vehicle.make} {vehicle.model} ({vehicle.year})</h1>
+      <h1 className="text-3xl font-bold mb-6 dark:text-white">{vehicle.make} {vehicle.model} ({vehicle.year})</h1>
       
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Vehicle Details</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-2xl font-semibold mb-4 dark:text-white">Vehicle Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
           <p><strong>License Plate:</strong> {vehicle.license_plate}</p>
-          <p><strong>VIN:</strong> {vehicle.vin}</p>
-          <p><strong>Color:</strong> {vehicle.color}</p>
-          <p><strong>Current Mileage:</strong> {vehicle.current_mileage}</p>
-          <p><strong>Status:</strong> {vehicle.status}</p>
-          <p><strong>Purchase Date:</strong> {vehicle.purchase_date}</p>
+          <p><strong>VIN:</strong> {vehicle.vin || 'N/A'}</p>
+          <p><strong>Color:</strong> {vehicle.color || 'N/A'}</p>
+          <p><strong>Current Mileage:</strong> {vehicle.current_mileage ? `${vehicle.current_mileage} km` : 'N/A'}</p>
+          <p><strong>Status:</strong> {vehicle.status || 'N/A'}</p>
+          <p><strong>Purchase Date:</strong> {vehicle.purchase_date || 'N/A'}</p>
+          <p><strong>Engine Type (DB):</strong> {vehicle.engine_type || 'N/A'}</p>
+          <p><strong>Fuel Type (DB):</strong> {vehicle.fuel_type || 'N/A'}</p>
+          <p><strong>Vehicle Type (DB):</strong> {vehicle.vehicle_type || 'N/A'}</p>
         </div>
+
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-semibold mb-3 dark:text-white">NHTSA Vehicle Specifications</h3>
+          {vehicle.vinDetails && Object.keys(vehicle.vinDetails).length > 0 ? (
+            vehicle.vinDetails.fetchAttempted ? (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p>{vehicle.vinDetails.message || "Fetch attempted: No displayable vehicle specifications were found after processing."}</p>
+                {vehicle.vinDetails.rawResponseErrorCode && vehicle.vinDetails.rawResponseErrorCode !== "0" && vehicle.vinDetails.rawResponseErrorCode !== "00" && (
+                  <p className="mt-1">API issue indicated (Code: {vehicle.vinDetails.rawResponseErrorCode}).</p>
+                )}
+              </div>
+            ) : (
+              <ul className="list-disc list-inside pl-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-300">
+                {Object.entries(vehicle.vinDetails)
+                  .filter(([key, value]) => {
+                    const nonDisplayKeys = ["Results", "ErrorCode", "ErrorText", "Message", "SearchCriteria", "PossibleValues"]; 
+                    if (nonDisplayKeys.includes(key)) return false;
+                    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null;
+                  })
+                  .map(([key, value]) => (
+                    <li key={key} className="truncate" title={`${formatFieldName(key)}: ${value === null ? 'N/A' : value}`}>
+                      <span className="font-medium">{formatFieldName(key)}:</span> {value === null ? 'N/A' : String(value)}
+                    </li>
+                ))}
+              </ul>
+            )
+          ) : vehicle.vin ? (
+            <button
+              onClick={handleFetchAndStoreNHTSADetails}
+              disabled={isFetchingNHTSADetailsForPage}
+              className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-sm text-sm disabled:opacity-50 flex items-center"
+            >
+              {isFetchingNHTSADetailsForPage ? (
+                <><FaSpinner className="animate-spin mr-2" /> Fetching...</>
+              ) : (
+                'Load Full Vehicle Specifications (NHTSA)'
+              )}
+            </button>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No VIN recorded for this vehicle to fetch specifications.</p>
+          )}
+        </div>
+
         <div className="mt-4">
           <Link 
             to={`/parts?vehicleId=${vehicle.id}`} 
