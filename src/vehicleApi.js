@@ -1,4 +1,4 @@
-export const NHTSA_BASE_URL = 'https://vpic.nhtsa.dot.gov/api/vehicles';
+export const NHTSA_BASE_URL = '/api/nhtsa/vehicles';
 
 export const getAllVehicleMakesFromNHTSA = async () => {
   try {
@@ -98,8 +98,7 @@ export const getModelsForMakeIdYearFromNHTSA = async (makeId, year) => {
 // Using DecodeVinValues for a simpler key-value pair response initially
 export const getVehicleDetailsByVin = async (vin, year = null) => {
   if (!vin || vin.length < 11) { 
-    // Consider returning a structured error or throwing, consistent with API failures
-    // For now, let the API call proceed and handle its response.
+    // Handled by API returning an error if VIN is too short or invalid
   }
   let url = `${NHTSA_BASE_URL}/DecodeVinValues/${vin}?format=json`;
   if (year) {
@@ -108,46 +107,72 @@ export const getVehicleDetailsByVin = async (vin, year = null) => {
 
   try {
     const response = await fetch(url);
-    // No need to check response.ok here if we always parse and return the body,
-    // as NHTSA often returns 200 OK even for errors, with details in the JSON body.
-    const data = await response.json(); 
+    const responseDetails = {
+        ErrorCode: "FETCH_ERROR", 
+        ErrorText: "Client: Initial failure to fetch or parse VIN details.",
+        Results: [],
+        Message: "",
+        SearchCriteria: `VIN: ${vin}${year ? ", Year: " + year : ""}`
+    };
 
-    const responseDetails = {};
+    if (!response.ok) {
+      responseDetails.ErrorCode = `HTTP_ERROR_${response.status}`;
+      let errorBodyText = "Could not read error body.";
+      try {
+          errorBodyText = await response.text();
+          console.error(`NHTSA API non-OK response (${response.status}) for ${url}:`, errorBodyText);
+      } catch (e) {
+          console.error(`NHTSA API non-OK response (${response.status}) for ${url}, and failed to read body:`, e);
+      }
+      responseDetails.ErrorText = `NHTSA API returned status ${response.status}: ${response.statusText}. Body: ${errorBodyText.substring(0, 300)}`;
+      return responseDetails;
+    }
 
-    // Preserve top-level API response fields that are useful for diagnostics or context.
-    if (data.Message) responseDetails.Message = data.Message;
-    responseDetails.ErrorCode = data.ErrorCode || ""; // Ensure ErrorCode is always present, even if empty string
-    if (data.ErrorText) responseDetails.ErrorText = data.ErrorText;
-    if (data.SearchCriteria) responseDetails.SearchCriteria = data.SearchCriteria;
-    
-    // Include the raw Results array. Ensure it's an array, defaulting to empty if not present.
-    responseDetails.Results = Array.isArray(data.Results) ? data.Results : [];
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.toLowerCase().includes("application/json")) {
+      const data = await response.json();
+      
+      // Successfully parsed JSON, now use its content
+      responseDetails.Message = data.Message || "";
+      responseDetails.ErrorCode = data.ErrorCode !== undefined ? data.ErrorCode.toString() : "JSON_NO_ERROR_CODE";
+      responseDetails.ErrorText = data.ErrorText || (data.ErrorCode !== undefined ? "" : "JSON parsed but no specific NHTSA ErrorCode or ErrorText provided.");
+      responseDetails.SearchCriteria = data.SearchCriteria || responseDetails.SearchCriteria;
+      responseDetails.Results = Array.isArray(data.Results) ? data.Results : [];
 
-    // Populate with key-value pairs from Results items if Results is a non-empty array
-    if (responseDetails.Results.length > 0) {
-      responseDetails.Results.forEach(item => {
-        if (item.Variable) { 
-          // Add both the original variable name (with spaces) and a version without spaces for easier access.
-          // The version without spaces might be more convenient as a JS object key.
-          // However, components are currently using original names; stick to that for direct mapping for now.
-          responseDetails[item.Variable] = item.Value; 
-        }
-      });
+      if (responseDetails.Results.length > 0) {
+        responseDetails.Results.forEach(item => {
+          if (item.Variable) { 
+            responseDetails[item.Variable] = item.Value; 
+          }
+        });
+      }
+      // If NHTSA ErrorCode is present and indicates an issue, ErrorText should reflect that.
+      if (data.ErrorCode && data.ErrorCode !== "0" && data.ErrorCode !== "00" && !data.ErrorText) {
+          responseDetails.ErrorText = `NHTSA API indicated an issue with ErrorCode: ${data.ErrorCode}.`;
+      }
+
+    } else {
+      responseDetails.ErrorCode = "INVALID_CONTENT_TYPE";
+      let responseBodyText = "Could not read non-JSON body.";
+      try {
+          responseBodyText = await response.text();
+          console.warn(`NHTSA API OK response but non-JSON Content-Type (${contentType}) for ${url}:`, responseBodyText);
+      } catch(e) {
+          console.warn(`NHTSA API OK response but non-JSON Content-Type (${contentType}) for ${url}, and failed to read body:`, e);
+      }
+      responseDetails.ErrorText = `Expected JSON from NHTSA, got ${contentType || 'unknown content type'}. Body: ${responseBodyText.substring(0,300)}`;
     }
     
-    // If the primary way to check for actual data is the content of `responseDetails` 
-    // beyond ErrorCode, Message, etc., this structure is fine.
-    // The components already check `details.ErrorCode` and the presence of other keys.
     return responseDetails;
 
-  } catch (error) {
-    console.error(`Error decoding VIN ${vin} from NHTSA (network or JSON parse error):`, error);
-    // For network errors or critical issues, throw or return a structured error
-    // that calling functions can distinguish from API-reported errors (like invalid VIN).
+  } catch (error) { 
+    console.error(`Client-side network error or issue before/during fetch for ${url}:`, error);
     return {
-        ErrorCode: "FETCH_ERROR", // Custom error code for client-side fetch issues
+        ErrorCode: "CLIENT_NETWORK_ERROR", 
         ErrorText: `Client-side error: ${error.message}`,
-        Results: []
+        Results: [],
+        Message: "",
+        SearchCriteria: `VIN: ${vin}${year ? ", Year: " + year : ""}`
     };
   }
 };

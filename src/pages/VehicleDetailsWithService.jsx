@@ -93,6 +93,12 @@ const VehicleDetailsWithService = () => {
           throw new Error("Vehicle not found");
         }
         setVehicle(vehicleData);
+        // Log vinDetails as soon as vehicle data is loaded
+        if (vehicleData && vehicleData.vinDetails) {
+          console.log("[VehicleDetails] Initial vehicle.vinDetails loaded from DB:", JSON.parse(JSON.stringify(vehicleData.vinDetails)));
+        } else if (vehicleData) {
+          console.log("[VehicleDetails] Initial vehicle data loaded, but no vinDetails field present.");
+        }
 
         const serviceRecordsData = await getServiceRecordsByVehicle(id);
         setServiceRecords(serviceRecordsData);
@@ -290,41 +296,50 @@ const VehicleDetailsWithService = () => {
 
         <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-xl font-semibold mb-3 dark:text-white">NHTSA Vehicle Specifications</h3>
-          {vehicle.vinDetails && Object.keys(vehicle.vinDetails).length > 0 ? (
-            vehicle.vinDetails.fetchAttempted ? (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p>{vehicle.vinDetails.message || "Fetch attempted: No displayable vehicle specifications were found after processing."}</p>
-                {vehicle.vinDetails.rawResponseErrorCode && vehicle.vinDetails.rawResponseErrorCode !== "0" && vehicle.vinDetails.rawResponseErrorCode !== "00" && (
-                  <p className="mt-1">API issue indicated (Code: {vehicle.vinDetails.rawResponseErrorCode}).</p>
-                )}
-              </div>
-            ) : (
-              <ul className="list-disc list-inside pl-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-300">
-                {Object.entries(vehicle.vinDetails)
-                  .filter(([key, value]) => {
-                    const nonDisplayKeys = ["Results", "ErrorCode", "ErrorText", "Message", "SearchCriteria", "PossibleValues"]; 
-                    if (nonDisplayKeys.includes(key)) return false;
-                    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null;
-                  })
-                  .map(([key, value]) => (
-                    <li key={key} className="truncate" title={`${formatFieldName(key)}: ${value === null ? 'N/A' : value}`}>
-                      <span className="font-medium">{formatFieldName(key)}:</span> {value === null ? 'N/A' : String(value)}
-                    </li>
-                ))}
-              </ul>
-            )
-          ) : vehicle.vin ? (
-            <button
-              onClick={handleFetchAndStoreNHTSADetails}
-              disabled={isFetchingNHTSADetailsForPage}
-              className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-sm text-sm disabled:opacity-50 flex items-center"
-            >
-              {isFetchingNHTSADetailsForPage ? (
-                <><FaSpinner className="animate-spin mr-2" /> Fetching...</>
-              ) : (
-                'Load Full Vehicle Specifications (NHTSA)'
+          {/* TEMPORARY: Always show button if VIN exists to allow re-fetch of old format data */}
+          {vehicle.vin ? (
+            <> 
+              {/* Original logic for displaying details or fetchAttempted message (will run after re-fetch) */}
+              {vehicle.vinDetails && Object.keys(vehicle.vinDetails).length > 0 && (
+                vehicle.vinDetails.fetchAttempted ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <p>{vehicle.vinDetails.message || "Fetch attempted: No displayable vehicle specifications were found after processing."}</p>
+                    {vehicle.vinDetails.rawResponseErrorCode && vehicle.vinDetails.rawResponseErrorCode !== "0" && vehicle.vinDetails.rawResponseErrorCode !== "00" && (
+                      <p className="mt-1">API issue indicated (Code: {vehicle.vinDetails.rawResponseErrorCode}).</p>
+                    )}
+                  </div>
+                ) : (
+                  Object.values(vehicle.vinDetails).some(val => typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') && (
+                    <ul className="list-disc list-inside pl-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      {Object.entries(vehicle.vinDetails)
+                        .filter(([key, value]) => {
+                          const nonDisplayKeys = ["Results", "ErrorCode", "ErrorText", "Message", "SearchCriteria", "PossibleValues"]; 
+                          if (nonDisplayKeys.includes(key)) return false;
+                          return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === null;
+                        })
+                        .map(([key, value]) => (
+                          <li key={key} className="truncate" title={`${formatFieldName(key)}: ${value === null ? 'N/A' : value}`}>
+                            <span className="font-medium">{formatFieldName(key)}:</span> {value === null ? 'N/A' : String(value)}
+                          </li>
+                      ))}
+                    </ul>
+                  )
+                )
               )}
-            </button>
+
+              {/* Always show the button if VIN is present, to allow re-fetching/overwriting old format */}
+              <button
+                onClick={handleFetchAndStoreNHTSADetails}
+                disabled={isFetchingNHTSADetailsForPage}
+                className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-sm text-sm disabled:opacity-50 flex items-center"
+              >
+                {isFetchingNHTSADetailsForPage ? (
+                  <><FaSpinner className="animate-spin mr-2" /> Fetching...</>
+                ) : (
+                  '(Re-)Fetch Full Vehicle Specifications (NHTSA)'
+                )}
+              </button>
+            </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No VIN recorded for this vehicle to fetch specifications.</p>
           )}
