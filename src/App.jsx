@@ -70,8 +70,7 @@ function AppContent() {
             <Route path="/parts" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
             <Route path="/parts/manage" element={<PrivateRoute><ManageParts /></PrivateRoute>} />
             <Route path="/stock-take" element={<PrivateRoute><StockTakePage /></PrivateRoute>} />
-            <Route path="/tools" element={<PrivateRoute><Tools /></PrivateRoute>} />
-            <Route path="/tools/manage" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
+            <Route path="/tools" element={<PrivateRoute><ManageTools /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
             <Route path="/locations/manage" element={<PrivateRoute><ManageLocations /></PrivateRoute>} />
             <Route path="/locations/:id" element={<PrivateRoute><LocationDetails /></PrivateRoute>} />

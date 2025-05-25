@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks, getAllParts, getAllLocations } from '../firebaseOperations';
-import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools } from 'react-icons/fa';
+import { getVehicle, getServiceRecordsByVehicle, deleteServiceRecord, updateServiceRecord, getVehicleTasks, getAllParts, getAllLocations, getAllPartsToOrder, addPartToOrder } from '../firebaseOperations';
+import { FaWrench, FaCalendar, FaTachometerAlt, FaUser, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaPrint, FaTasks, FaTools, FaPlus, FaSave, FaTimes, FaClipboardList, FaBarcode, FaPlusCircle } from 'react-icons/fa';
 import ServiceReport from '../components/ServiceReport';
 import { useNotification } from '../contexts/NotificationContext';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import CreateTaskFromPartsModal from '../components/CreateTaskFromPartsModal';
+import QuickRequestPartModal from '../components/QuickRequestPartModal';
+import { MdMiscellaneousServices } from "react-icons/md";
 
 const VehicleDetailsWithService = () => {
   const { showNotification } = useNotification();
@@ -18,6 +21,15 @@ const VehicleDetailsWithService = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [selectedServiceRecord, setSelectedServiceRecord] = useState(null);
   const [expandedTask, setExpandedTask] = useState(null);
+  const [expandedTaskId, setExpandedTaskId] = useState(null);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [isPartsModalOpen, setIsPartsModalOpen] = useState(false);
+  const [selectedTaskForParts, setSelectedTaskForParts] = useState(null);
+  const [isQuickRequestModalOpen, setIsQuickRequestModalOpen] = useState(false);
+  const [selectedTaskForPartRequest, setSelectedTaskForPartRequest] = useState(null);
+
+  const queryClient = useQueryClient();
 
   // Fetch all parts for location lookup
   const { data: allParts, isLoading: isLoadingAllParts, error: errorAllParts } = useQuery(
@@ -36,6 +48,27 @@ const VehicleDetailsWithService = () => {
       staleTime: 300000, // 5 minutes
     }
   );
+
+  // Fetch partsToOrder
+  const { data: partsToOrder, isLoading: isLoadingPartsToOrder } = useQuery(
+    'partsToOrderForVehicleDetails', 
+    getAllPartsToOrder,
+    { staleTime: 60000 }
+  );
+
+  // Mutation for creating a part to order
+  const createPartToOrderMutation = useMutation(addPartToOrder, {
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries('partsToOrderForVehicleDetails');
+      queryClient.invalidateQueries('partsToOrder');
+      showNotification(`Part '${variables.part_name}' added to order list.`, 'success');
+      setIsQuickRequestModalOpen(false);
+      setSelectedTaskForPartRequest(null);
+    },
+    onError: (error, variables) => {
+      showNotification(`Error adding part '${variables.part_name}' to order: ${error.message}`, 'error');
+    },
+  });
 
   // New useEffect to log allParts and allLocations when they are loaded
   useEffect(() => {
@@ -120,6 +153,11 @@ const VehicleDetailsWithService = () => {
   const handlePrintReport = (e, record) => {
     e.stopPropagation();
     setSelectedServiceRecord(record);
+  };
+
+  const handleOpenQuickRequestModal = (task) => {
+    setSelectedTaskForPartRequest(task);
+    setIsQuickRequestModalOpen(true);
   };
 
   if (loading) return <div>Loading vehicle details and service records...</div>;
@@ -353,6 +391,14 @@ const VehicleDetailsWithService = () => {
                         </ul>
                       </div>
                     )}
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                      <button 
+                        onClick={() => handleOpenQuickRequestModal(task)}
+                        className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium py-1 px-2 rounded-md bg-indigo-50 dark:bg-indigo-900 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
+                      >
+                        <FaPlusCircle className="mr-2" /> Add/Request Part for this Task
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -390,6 +436,20 @@ const VehicleDetailsWithService = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {isQuickRequestModalOpen && selectedTaskForPartRequest && (
+        <QuickRequestPartModal 
+          isOpen={isQuickRequestModalOpen}
+          onClose={() => {
+            setIsQuickRequestModalOpen(false);
+            setSelectedTaskForPartRequest(null);
+          }}
+          vehicleId={id}
+          serviceId={selectedTaskForPartRequest.service_id || expandedRecord?.id}
+          allParts={allParts || []} 
+          createPartToOrderMutation={createPartToOrderMutation}
+        />
       )}
     </div>
   );
